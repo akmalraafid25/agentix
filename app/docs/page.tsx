@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
@@ -14,17 +15,30 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
-import { useEffect, useState } from "react"
 import { IconCirclePlusFilled, IconMail } from "@tabler/icons-react"
 
 export default function Page() {
-  const [data, setData] = useState([])
+  const [invoiceData, setInvoiceData] = useState([])
+  const [packingData, setPackingData] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/invoices')
-      .then(res => res.json())
-      .then(setData)
-      .catch(() => setData([]))
+    Promise.all([
+      fetch('/api/invoices').then(res => res.json()),
+      fetch('/api/packing').then(res => res.json())
+    ])
+      .then(([invoices, packing]) => {
+        setInvoiceData(Array.isArray(invoices) ? invoices : [])
+        setPackingData(Array.isArray(packing) ? packing : [])
+      })
+      .catch(err => {
+        console.error('API Error:', err)
+        setInvoiceData([])
+        setPackingData([])
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [])
 
   return (
@@ -44,7 +58,7 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-6">
               </div>
-              <DataTable data={data} />
+              <DataTable data={invoiceData} packingData={packingData} loading={loading} />
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
@@ -14,10 +14,30 @@ import {
 } from "@/components/ui/sidebar"
 import { IconRobotFace } from "@tabler/icons-react"
 
-import data from "./data.json"
-
 export default function Page() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
+  const [invoiceData, setInvoiceData] = useState([])
+  const [packingData, setPackingData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/invoices').then(res => res.json()),
+      fetch('/api/packing').then(res => res.json())
+    ])
+      .then(([invoices, packing]) => {
+        setInvoiceData(Array.isArray(invoices) ? invoices : [])
+        setPackingData(Array.isArray(packing) ? packing : [])
+      })
+      .catch(err => {
+        console.error('API Error:', err)
+        setInvoiceData([])
+        setPackingData([])
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [])
 
   return (
     <SidebarProvider
@@ -49,7 +69,7 @@ AI Analytics
                 <div className="px-4 lg:px-6">
                   <ChartAreaInteractive />
                 </div>
-                <DataTable data={data} />
+                <DataTable data={invoiceData} packingData={packingData} loading={loading} />
               </div>
             </div>
           </div>

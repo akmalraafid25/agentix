@@ -139,7 +139,7 @@ const data = {
     },
     {
       name: "Reports",
-      url: "#",
+      url: "/report",
       icon: IconReport,
     },
     {

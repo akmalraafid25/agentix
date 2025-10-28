@@ -221,7 +221,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "item_no",
     header: "Item No.",
     cell: ({ row }) => (
-      <div className="w-32">
+      <div className="w-48">
         {row.original.item_no.map((item, index) => (
           <div key={index}>{item}</div>
         ))}
@@ -233,7 +233,13 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: "Quantity",
     cell: ({ row }) => (
       <div className="w-20 text-right">
-        {row.original.quantity}
+        {Array.isArray(row.original.quantity) ? (
+          row.original.quantity.map((qty, index) => (
+            <div key={index}>{qty}</div>
+          ))
+        ) : (
+          row.original.quantity
+        )}
       </div>
     ),
   },
@@ -241,8 +247,14 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <div className="w-24 text-right">
-        ${row.original.price}
+      <div className="w-32 text-right">
+        {Array.isArray(row.original.price) ? (
+          row.original.price.map((price, index) => (
+            <div key={index}>${price}</div>
+          ))
+        ) : (
+          `$${row.original.price}`
+        )}
       </div>
     ),
   },
@@ -319,10 +331,27 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 
 export function DataTable({
   data: initialData,
+  packingData = [],
+  loading = false,
 }: {
   data: z.infer<typeof schema>[]
+  packingData?: z.infer<typeof schema>[]
+  loading?: boolean
 }) {
+  const [packingTableData, setPackingTableData] = React.useState(() => packingData)
+
+  React.useEffect(() => {
+    if (JSON.stringify(packingTableData) !== JSON.stringify(packingData)) {
+      setPackingTableData(packingData)
+    }
+  }, [packingData])
   const [data, setData] = React.useState(() => initialData)
+
+  React.useEffect(() => {
+    if (JSON.stringify(data) !== JSON.stringify(initialData)) {
+      setData(initialData)
+    }
+  }, [initialData])
 
   const handleAddInvoice = (newInvoice: z.infer<typeof schema>) => {
     setData(prev => [...prev, newInvoice])
@@ -348,6 +377,11 @@ export function DataTable({
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
+  )
+
+  const packingDataIds = React.useMemo<UniqueIdentifier[]>(
+    () => packingTableData?.map(({ id }) => id) || [],
+    [packingTableData]
   )
 
   const table = useReactTable({
@@ -376,6 +410,38 @@ export function DataTable({
     meta: {
       updateData: (rowIndex: number, updatedItem: z.infer<typeof schema>) => {
         setData(prev => prev.map((item, index) => 
+          index === rowIndex ? updatedItem : item
+        ))
+      }
+    }
+  })
+
+  const packingTable = useReactTable({
+    data: packingTableData,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      pagination,
+    },
+    getRowId: (row) => row.id.toString(),
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    meta: {
+      updateData: (rowIndex: number, updatedItem: z.infer<typeof schema>) => {
+        setPackingTableData(prev => prev.map((item, index) => 
           index === rowIndex ? updatedItem : item
         ))
       }
@@ -496,7 +562,19 @@ export function DataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {table.getRowModel().rows?.length ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <IconLoader className="size-4 animate-spin" />
+                        Loading...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows?.length ? (
                   <SortableContext
                     items={dataIds}
                     strategy={verticalListSortingStrategy}
@@ -605,13 +683,22 @@ export function DataTable({
           <DndContext
             collisionDetection={closestCenter}
             modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(event) => {
+              const { active, over } = event
+              if (active && over && active.id !== over.id) {
+                setPackingTableData((data) => {
+                  const oldIndex = packingDataIds.indexOf(active.id)
+                  const newIndex = packingDataIds.indexOf(over.id)
+                  return arrayMove(data, oldIndex, newIndex)
+                })
+              }
+            }}
             sensors={sensors}
             id={sortableId + "-po"}
           >
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
+                {packingTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
@@ -629,14 +716,114 @@ export function DataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No Purchase Order data available.
-                  </TableCell>
-                </TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <IconLoader className="size-4 animate-spin" />
+                        Loading...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : packingTable.getRowModel().rows?.length ? (
+                  <SortableContext
+                    items={packingDataIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {packingTable.getRowModel().rows.map((row) => (
+                      <DraggableRow key={row.id} row={row} />
+                    ))}
+                  </SortableContext>
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No Purchase Order data available.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </DndContext>
+        </div>
+        <div className="flex items-center justify-between px-4">
+          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+            {packingTable.getFilteredSelectedRowModel().rows.length} of{" "}
+            {packingTable.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label htmlFor="rows-per-page-po" className="text-sm font-medium">
+                Rows per page
+              </Label>
+              <Select
+                value={`${packingTable.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  packingTable.setPageSize(Number(value))
+                }}
+              >
+                <SelectTrigger size="sm" className="w-20" id="rows-per-page-po">
+                  <SelectValue
+                    placeholder={packingTable.getState().pagination.pageSize}
+                  />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
+              Page {packingTable.getState().pagination.pageIndex + 1} of{" "}
+              {packingTable.getPageCount()}
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => packingTable.setPageIndex(0)}
+                disabled={!packingTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to first page</span>
+                <IconChevronsLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => packingTable.previousPage()}
+                disabled={!packingTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <IconChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => packingTable.nextPage()}
+                disabled={!packingTable.getCanNextPage()}
+              >
+                <span className="sr-only">Go to next page</span>
+                <IconChevronRight />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                onClick={() => packingTable.setPageIndex(packingTable.getPageCount() - 1)}
+                disabled={!packingTable.getCanNextPage()}
+              >
+                <span className="sr-only">Go to last page</span>
+                <IconChevronsRight />
+              </Button>
+            </div>
+          </div>
         </div>
       </TabsContent>
       <TabsContent value="key-personnel" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
@@ -668,11 +855,25 @@ export function DataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No Bill of Lading data available.
-                  </TableCell>
-                </TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <IconLoader className="size-4 animate-spin" />
+                        Loading...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No Bill of Lading data available.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </DndContext>
@@ -710,11 +911,25 @@ export function DataTable({
                 ))}
               </TableHeader>
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No Progress data available.
-                  </TableCell>
-                </TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <IconLoader className="size-4 animate-spin" />
+                        Loading...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No Progress data available.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </DndContext>
@@ -827,52 +1042,41 @@ function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onU
             </>
           )}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="source">Source</Label>
-              <Input id="source" value={formData.source} onChange={(e) => setFormData({...formData, source: e.target.value})} />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="invoice_no">Invoice No.</Label>
-                <Input id="invoice_no" value={formData.invoice_no} onChange={(e) => setFormData({...formData, invoice_no: e.target.value})} />
+                <Label htmlFor="invoice_no">Document No.</Label>
+                <Input id="invoice_no" value={formData.invoice_no || ''} onChange={(e) => setFormData({...formData, invoice_no: e.target.value})} />
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="vendor_name">Vendor Name</Label>
-                <Input id="vendor_name" value={formData.vendor_name} onChange={(e) => setFormData({...formData, vendor_name: e.target.value})} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="purchase_order_no">Purchase Order No.</Label>
-                <Input id="purchase_order_no" value={formData.purchase_order_no} onChange={(e) => setFormData({...formData, purchase_order_no: e.target.value})} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="price">Price</Label>
-                <Input id="price" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="currency">Currency</Label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                  <SelectTrigger id="currency" className="w-full">
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input id="vendor_name" value={formData.vendor_name || ''} onChange={(e) => setFormData({...formData, vendor_name: e.target.value})} />
               </div>
             </div>
             <div className="flex flex-col gap-3">
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={formData.currency || 'USD'} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                <SelectTrigger id="currency" className="w-full">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="items">Items</Label>
+              <textarea 
+                id="items" 
+                value={Array.isArray(formData.item_no) ? formData.item_no.join('\n') : ''} 
+                readOnly 
+                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
               <Label htmlFor="created_at">Created At</Label>
-              <Input id="created_at" type="date" value={formData.created_at} onChange={(e) => setFormData({...formData, created_at: e.target.value})} />
+              <Input id="created_at" value={formData.created_at || ''} onChange={(e) => setFormData({...formData, created_at: e.target.value})} />
             </div>
           </form>
         </div>
