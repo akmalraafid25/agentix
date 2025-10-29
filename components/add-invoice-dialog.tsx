@@ -28,9 +28,28 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
     header: "",
     type: "Invoice"
   })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!selectedFile) return
+    
+    // Upload file to Snowflake and send webhook
+    try {
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', selectedFile)
+      uploadFormData.append('webhookUrl', 'http://localhost:3000/api/webhook')
+      
+      await fetch(`/api/pdf/${selectedFile.name}`, {
+        method: 'POST',
+        body: uploadFormData
+      })
+      toast.success("Document uploaded successfully")
+    } catch (error) {
+      toast.error("Upload failed")
+      return
+    }
     
     const newInvoice = {
       ...formData,
@@ -40,7 +59,6 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
     }
     
     onAdd(newInvoice)
-    toast.success("Invoice added successfully")
     setOpen(false)
     
     // Reset form
@@ -72,7 +90,8 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
           <DialogTitle>Add New Document</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
+          <div className="relative border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer"
+               onClick={() => document.getElementById('file-input')?.click()}>
             <div className="mx-auto w-12 h-12 mb-4 text-muted-foreground">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -82,19 +101,21 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
               <p className="text-sm font-medium">Drop your PDF file here, or click to browse</p>
               <p className="text-xs text-muted-foreground">PDF files only, up to 10MB</p>
             </div>
-            <Input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) {
-                  setFormData({...formData, source: file.name})
-                }
-              }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              required
-            />
           </div>
+          <Input
+            id="file-input"
+            type="file"
+            accept=".pdf"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                setFormData({...formData, source: file.name})
+                setSelectedFile(file)
+              }
+            }}
+            className="hidden"
+            required
+          />
           
           {formData.source && (
             <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
@@ -106,7 +127,7 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
           )}
 
           <Button type="submit" className="w-full" disabled={!formData.source}>
-            Upload Document
+            Submit
           </Button>
         </form>
       </DialogContent>

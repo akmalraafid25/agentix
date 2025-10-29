@@ -28,8 +28,7 @@ export function AnalyticsSidebar({ isOpen, onClose }: AnalyticsSidebarProps) {
     }
   ])
   const [input, setInput] = useState('')
-  const [width, setWidth] = useState(384) // 96 * 4 = 384px (w-96)
-  const [isResizing, setIsResizing] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -40,32 +39,7 @@ export function AnalyticsSidebar({ isOpen, onClose }: AnalyticsSidebarProps) {
     scrollToBottom()
   }, [messages])
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsResizing(true)
-    e.preventDefault()
-  }
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      const newWidth = window.innerWidth - e.clientX
-      setWidth(Math.max(300, Math.min(800, newWidth)))
-    }
-
-    const handleMouseUp = () => {
-      setIsResizing(false)
-    }
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isResizing])
 
   const handleSend = async () => {
     if (!input.trim()) return
@@ -151,16 +125,7 @@ export function AnalyticsSidebar({ isOpen, onClose }: AnalyticsSidebarProps) {
   }
 
   return (
-    <div 
-      className={`fixed right-0 top-0 h-screen bg-background border-l transition-all duration-300 ${isOpen ? '' : 'w-0'} overflow-hidden z-40`}
-      style={{ width: isOpen ? `${width}px` : '0px' }}
-    >
-      {isOpen && (
-        <div 
-          className="absolute left-0 top-0 w-1 h-full cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
-          onMouseDown={handleMouseDown}
-        />
-      )}
+    <div className={`fixed right-0 top-0 h-screen bg-background border-l transition-all duration-300 ${isOpen ? 'w-[500px]' : 'w-0'} overflow-hidden z-40`}>
       <Card className="h-full flex flex-col rounded-none border-0">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center gap-2">
