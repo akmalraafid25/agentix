@@ -85,7 +85,7 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
           Add Document
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] will-change-transform">
         <DialogHeader>
           <DialogTitle>Add New Document</DialogTitle>
         </DialogHeader>

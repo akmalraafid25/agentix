@@ -24,6 +24,7 @@ import {
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronUp,
   IconChevronsLeft,
   IconChevronsRight,
   IconCircleCheckFilled,
@@ -176,7 +177,22 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "source",
-    header: "Source",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-2"
+      >
+        Source
+        {column.getIsSorted() === "asc" ? (
+          <IconChevronUp className="ml-2 h-4 w-4" />
+        ) : column.getIsSorted() === "desc" ? (
+          <IconChevronDown className="ml-2 h-4 w-4" />
+        ) : (
+          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        )}
+      </Button>
+    ),
     cell: ({ row, table }) => {
       const handleUpdate = (updatedItem: z.infer<typeof schema>) => {
         const meta = table.options.meta as any
@@ -190,9 +206,24 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "invoice_no",
-    header: "Invoice No.",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-2"
+      >
+        Invoice No.
+        {column.getIsSorted() === "asc" ? (
+          <IconChevronUp className="ml-2 h-4 w-4" />
+        ) : column.getIsSorted() === "desc" ? (
+          <IconChevronDown className="ml-2 h-4 w-4" />
+        ) : (
+          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        )}
+      </Button>
+    ),
     cell: ({ row }) => (
-      <div className="w-32">
+      <div>
         <Badge variant="outline" className="text-muted-foreground px-1.5">
           {row.original.invoice_no}
         </Badge>
@@ -201,9 +232,24 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "vendor_name",
-    header: "Vendor Name",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-2"
+      >
+        Vendor Name
+        {column.getIsSorted() === "asc" ? (
+          <IconChevronUp className="ml-2 h-4 w-4" />
+        ) : column.getIsSorted() === "desc" ? (
+          <IconChevronDown className="ml-2 h-4 w-4" />
+        ) : (
+          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        )}
+      </Button>
+    ),
     cell: ({ row }) => (
-      <div className="w-32">
+      <div>
         {row.original.vendor_name}
       </div>
     ),
@@ -212,7 +258,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "purchase_order_no",
     header: "Purchase Order No.",
     cell: ({ row }) => (
-      <div className="w-32">
+      <div>
         {row.original.purchase_order_no}
       </div>
     ),
@@ -221,10 +267,14 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "item_no",
     header: "Item No.",
     cell: ({ row }) => (
-      <div className="w-48">
-        {row.original.item_no.map((item, index) => (
-          <div key={index}>{item}</div>
-        ))}
+      <div className="whitespace-nowrap">
+        {Array.isArray(row.original.item_no) ? (
+          row.original.item_no.map((item, index) => (
+            <div key={index}>{item}</div>
+          ))
+        ) : (
+          <div>{row.original.item_no}</div>
+        )}
       </div>
     ),
   },
@@ -232,7 +282,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "quantity",
     header: "Quantity",
     cell: ({ row }) => (
-      <div className="w-20 text-right">
+      <div className="text-right">
         {Array.isArray(row.original.quantity) ? (
           row.original.quantity.map((qty, index) => (
             <div key={index}>{qty}</div>
@@ -247,7 +297,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <div className="w-32 text-right">
+      <div className="text-right">
         {Array.isArray(row.original.price) ? (
           row.original.price.map((price, index) => (
             <div key={index}>${price}</div>
@@ -262,16 +312,31 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "currency",
     header: "Currency",
     cell: ({ row }) => (
-      <div className="w-20">
+      <div>
         {row.original.currency}
       </div>
     ),
   },
   {
     accessorKey: "created_at",
-    header: "Created At",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-2"
+      >
+        Created At
+        {column.getIsSorted() === "asc" ? (
+          <IconChevronUp className="ml-2 h-4 w-4" />
+        ) : column.getIsSorted() === "desc" ? (
+          <IconChevronDown className="ml-2 h-4 w-4" />
+        ) : (
+          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        )}
+      </Button>
+    ),
     cell: ({ row }) => (
-      <div className="w-28">
+      <div>
         {row.original.created_at}
       </div>
     ),
@@ -367,6 +432,10 @@ export function DataTable({
     pageIndex: 0,
     pageSize: 10,
   })
+  const [packingPagination, setPackingPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -424,7 +493,7 @@ export function DataTable({
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination,
+      pagination: packingPagination,
     },
     getRowId: (row) => row.id.toString(),
     enableRowSelection: true,
@@ -432,7 +501,7 @@ export function DataTable({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: setPackingPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -542,7 +611,7 @@ export function DataTable({
             sensors={sensors}
             id={sortableId}
           >
-            <Table>
+            <Table className="table-auto">
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -696,7 +765,7 @@ export function DataTable({
             sensors={sensors}
             id={sortableId + "-po"}
           >
-            <Table>
+            <Table className="table-auto">
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {packingTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -835,7 +904,7 @@ export function DataTable({
             sensors={sensors}
             id={sortableId + "-bol"}
           >
-            <Table>
+            <Table className="table-auto">
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -891,7 +960,7 @@ export function DataTable({
             sensors={sensors}
             id={sortableId + "-progress"}
           >
-            <Table>
+            <Table className="table-auto">
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

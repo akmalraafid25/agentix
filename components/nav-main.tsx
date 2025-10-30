@@ -30,7 +30,7 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <a href={item.url}>
-                <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url}>
+                <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url} className="hover:bg-gray-200 dark:hover:bg-gray-700 data-[active=true]:bg-gray-200 dark:data-[active=true]:bg-gray-700">
                 {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </SidebarMenuButton>

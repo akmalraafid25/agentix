@@ -37,9 +37,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { IconChevronDown, IconLayoutColumns } from "@tabler/icons-react"
+import { IconChevronDown, IconLayoutColumns, IconCheck, IconX, IconExclamationMark } from "@tabler/icons-react"
 
-const pendingReviewData = [
+import { Textarea } from "@/components/ui/textarea"
+
+const initialData = [
   {
     documentSet: "DOC-001",
     invoiceNo: "INV-2024-001",
@@ -67,6 +69,54 @@ const pendingReviewData = [
 ]
 
 export default function Page() {
+  const [pendingReviewData, setPendingReviewData] = useState(initialData)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState('')
+  const [actionData, setActionData] = useState({ type: 'buyer_notify', subject: '', body: '' })
+  
+  const updateReviewStatus = async (documentSet: string, newStatus: string) => {
+    setPendingReviewData(prev => 
+      prev.map(item => 
+        item.documentSet === documentSet 
+          ? { ...item, reviewStatus: newStatus }
+          : item
+      )
+    )
+  }
+  
+  const templates = {
+    buyer_notify: {
+      subject: 'Document Review Required',
+      body: 'Dear Buyer,\n\nPlease review the document set for processing. Your attention is required to proceed with the order.\n\nBest regards,\nSystem'
+    },
+    vendor_response: {
+      subject: 'Vendor Response Required',
+      body: 'Dear Vendor,\n\nWe require additional information for this document set. Please provide the missing details at your earliest convenience.\n\nBest regards,\nProcurement Team'
+    },
+    po_amendment: {
+      subject: 'PO Amendment Request',
+      body: 'Dear Team,\n\nPurchase order amendment is required for this document set. Please review and approve the changes.\n\nBest regards,\nProcurement Team'
+    }
+  }
+  
+  const handleAIAction = (documentSet: string) => {
+    setSelectedDocument(documentSet)
+    setActionData({
+      type: 'buyer_notify',
+      subject: templates.buyer_notify.subject,
+      body: templates.buyer_notify.body
+    })
+    setSidebarOpen(true)
+  }
+  
+  const updateActionType = (actionType: string) => {
+    const template = templates[actionType as keyof typeof templates]
+    setActionData({
+      type: actionType,
+      subject: template.subject,
+      body: template.body
+    })
+  }
   return (
     <SidebarProvider
       style={
@@ -77,7 +127,8 @@ export default function Page() {
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <div className="flex flex-1">
+        <SidebarInset className="flex-1">
         <SiteHeader />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
@@ -139,6 +190,7 @@ export default function Page() {
                           <TableHead>Agent's Action</TableHead>
                           <TableHead>ERP Match</TableHead>
                           <TableHead>Review Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -152,17 +204,45 @@ export default function Page() {
                             <TableCell>{item.billOfLading}</TableCell>
                             <TableCell>{item.vendor}</TableCell>
                             <TableCell className="text-right">IDR {item.amount}</TableCell>
-                            <TableCell>{item.exceptionDetails}</TableCell>
+                            <TableCell>
+                              <Badge variant={item.exceptionDetails ? "outline" : "secondary"}>
+                                {item.exceptionDetails || "No Issues"}
+                              </Badge>
+                            </TableCell>
                             <TableCell>{item.agentsAction}</TableCell>
                             <TableCell>
-                              <Badge variant={item.erpMatch === "Matched" ? "default" : "secondary"}>
+                              <Badge 
+                                variant={item.erpMatch === "Matched" ? "default" : "secondary"} 
+                                className={`flex items-center gap-1 ${item.erpMatch === "Partial" ? "bg-yellow-100 text-yellow-800 border-yellow-300" : ""}`}
+                              >
+                                {item.erpMatch === "Matched" && <IconCheck className="h-3 w-3" />}
+                                {item.erpMatch === "Partial" && <IconExclamationMark className="h-3 w-3" />}
+                                {item.erpMatch === "Not Matched" && <IconX className="h-3 w-3" />}
                                 {item.erpMatch}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={item.reviewStatus === "Pending" ? "destructive" : "secondary"}>
-                                {item.reviewStatus}
-                              </Badge>
+                              <Select value={item.reviewStatus} onValueChange={(value) => updateReviewStatus(item.documentSet, value)}>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Pending">Pending</SelectItem>
+                                  <SelectItem value="In Progress">In Progress</SelectItem>
+                                  <SelectItem value="Approved">Approved</SelectItem>
+                                  <SelectItem value="Rejected">Rejected</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm">
+                                  View Items Match
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleAIAction(item.documentSet)}>
+                                  AI Actions
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -199,7 +279,44 @@ export default function Page() {
             </div>
           </div>
         </div>
-      </SidebarInset>
+        </SidebarInset>
+        
+        {sidebarOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed top-0 right-0 h-full w-[500px] bg-background border-l shadow-lg z-50 p-4 space-y-4 transform transition-transform duration-300 ease-in-out animate-in slide-in-from-right">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">AI Actions - {selectedDocument}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>×</Button>
+            </div>
+            <div>
+              <Label className="py-2">Action Type</Label>
+              <Select value={actionData.type} onValueChange={updateActionType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="buyer_notify">Buyer Notify</SelectItem>
+                  <SelectItem value="vendor_response">Vendor Response</SelectItem>
+                  <SelectItem value="po_amendment">PO Amendment Request</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="py-2">Email Subject</Label>
+              <div className="p-2 bg-muted rounded">{actionData.subject}</div>
+            </div>
+            <div>
+              <Label className="py-2">Email Body</Label>
+              <Textarea value={actionData.body} readOnly rows={8} />
+            </div>
+            <Button className="w-full">
+              Send Email
+            </Button>
+            </div>
+          </>
+        )}
+      </div>
     </SidebarProvider>
   )
 }
