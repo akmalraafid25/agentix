@@ -68,7 +68,7 @@ export default function Page() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = () => {
     // Tab change will use the already polling data
     // No need to manually fetch again
   }

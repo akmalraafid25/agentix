@@ -27,13 +27,10 @@ import {
   IconChevronUp,
   IconChevronsLeft,
   IconChevronsRight,
-  IconCircleCheckFilled,
   IconDotsVertical,
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
-  IconPlus,
-  IconTrendingUp,
 } from "@tabler/icons-react"
 import {
   ColumnDef,
@@ -196,7 +193,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
     cell: ({ row, table }) => {
       const handleUpdate = (updatedItem: z.infer<typeof schema>) => {
-        const meta = table.options.meta as any
+        const meta = table.options.meta as { updateData?: (index: number, item: z.infer<typeof schema>) => void } | undefined
         if (meta?.updateData) {
           meta.updateData(row.index, updatedItem)
         }
@@ -421,19 +418,16 @@ export function DataTable({
     if (JSON.stringify(packingTableData) !== JSON.stringify(packingData)) {
       setPackingTableData(packingData)
     }
-  }, [packingData])
+  }, [packingData, packingTableData])
   const [data, setData] = React.useState(() => initialData)
 
   React.useEffect(() => {
     if (JSON.stringify(data) !== JSON.stringify(initialData)) {
       setData(initialData)
     }
-  }, [initialData])
+  }, [initialData, data])
 
-  const handleAddInvoice = (newInvoice: z.infer<typeof schema>) => {
-    // Data will be refreshed automatically via polling
-    // No manual insertion needed
-  }
+
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -618,7 +612,7 @@ export function DataTable({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <AddInvoiceDialog onAdd={handleAddInvoice} />
+          <AddInvoiceDialog onAdd={() => {}} />
         </div>
       </div>
       <TabsContent
@@ -1051,7 +1045,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onUpdate: (updatedItem: z.infer<typeof schema>) => void }) {
-  const isMobile = useIsMobile()
+
   const [formData, setFormData] = React.useState(item)
 
   const handleSubmit = (e: React.FormEvent) => {

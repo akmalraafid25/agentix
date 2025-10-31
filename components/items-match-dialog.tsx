@@ -4,21 +4,11 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+
 import { IconX, IconCheck, IconAlertTriangle } from "@tabler/icons-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-const itemsData = [
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-01", quantity: 163, unitPrice: 701.37, lineAmount: 114323.31, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-02", quantity: 163, unitPrice: 20.63, lineAmount: 3362.69, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-03", quantity: 163, unitPrice: 20.63, lineAmount: 3362.69, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-04", quantity: 326, unitPrice: 61.89, lineAmount: 20176.14, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-05", quantity: 163, unitPrice: 165.03, lineAmount: 26899.89, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-06", quantity: 163, unitPrice: 103.14, lineAmount: 16811.82, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-07", quantity: 163, unitPrice: 288.8, lineAmount: 47074.4, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-08", quantity: 163, unitPrice: 185.66, lineAmount: 30262.58, matchERP: true, matchPL: true },
-  { poNumber: "4500001357", itemCode: "MZ-RM-R200-09", quantity: 163, unitPrice: 453.83, lineAmount: 73974.29, matchERP: true, matchPL: true }
-]
+
 
 interface ItemsMatchDialogProps {
   documentSet: string
@@ -26,7 +16,7 @@ interface ItemsMatchDialogProps {
 
 export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
   const [open, setOpen] = useState(false)
-  const [itemsData, setItemsData] = useState([])
+  const [itemsData, setItemsData] = useState<unknown[]>([])
 
   useEffect(() => {
     const fetchItems = async () => {

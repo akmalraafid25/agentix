@@ -3,14 +3,13 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { IconCirclePlusFilled } from "@tabler/icons-react"
 import { toast } from "sonner"
 
 interface AddInvoiceDialogProps {
-  onAdd: (invoice: any) => void
+  onAdd: (invoice: Record<string, unknown>) => void
 }
 
 export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
@@ -46,7 +45,7 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
         body: uploadFormData
       })
       toast.success("Document uploaded successfully")
-    } catch (error) {
+    } catch {
       toast.error("Upload failed")
       return
     }

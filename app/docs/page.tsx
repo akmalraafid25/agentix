@@ -2,20 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import {
-  SidebarGroupContent,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-
-import { IconCirclePlusFilled, IconMail } from "@tabler/icons-react"
 
 export default function Page() {
   const [invoiceData, setInvoiceData] = useState([])
