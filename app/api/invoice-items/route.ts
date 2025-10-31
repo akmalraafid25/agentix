@@ -1,6 +1,6 @@
 import { executeQuery } from '@/lib/snowflake'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
 
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     
     const rows = await executeQuery(query)
     
-    const transformedData = rows.map((row: Record<string, unknown>) => ({
+    const transformedData = (rows as Record<string, unknown>[]).map((row: Record<string, unknown>) => ({
       poNumber: row.PONO,
       itemCode: row.ITEMCODE,
       quantity: row.QUANTITY,

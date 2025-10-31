@@ -36,7 +36,7 @@ export async function GET() {
     GROUP BY inv.ID, inv.INVOICENO, inv.PONUMBER, inv.SOURCE, inv.CURRENCY, inv.CREATEDAT;
     `
     console.log('Invoice API: Executing query:', query)
-    const rows = await executeQuery(query)
+    const rows = await executeQuery(query) as Record<string, unknown>[]
     console.log('Invoice API: Query result rows:', rows.length)
     console.log('Invoice API: Sample row:', rows[0])
     
@@ -47,11 +47,11 @@ export async function GET() {
       invoice_no: row.INVOICE_NO || `-`,
       vendor_name: `${row.VENDOR_NAME}`,
       purchase_order_no: row.PO_NUMBER,
-      item_no: row.ITEM_CODES ? row.ITEM_CODES.split(', ') : [],
-      quantity: row.QUANTITIES ? row.QUANTITIES.split(', ') : [],
-      price: row.PRICES ? row.PRICES.split(', ') : [],
+      item_no: row.ITEM_CODES ? String(row.ITEM_CODES).split(', ') : [],
+      quantity: row.QUANTITIES ? String(row.QUANTITIES).split(', ') : [],
+      price: row.PRICES ? String(row.PRICES).split(', ') : [],
       currency: row.CURRENCY || "USD",
-      created_at: row["Created At"] ? new Date(row["Created At"]).toISOString() : new Date().toISOString(),
+      created_at: row["Created At"] ? new Date(String(row["Created At"])).toISOString() : new Date().toISOString(),
       header: `Invoice SoftwareOne Indonesia`,
       type: "Invoice",
       total_amount: row.TOTAL_AMOUNT ? row.TOTAL_AMOUNT.toString() : "0"
@@ -62,7 +62,7 @@ export async function GET() {
     return Response.json(transformedData)
   } catch (error) {
     console.error('Invoice API: Snowflake query error:', error)
-    console.error('Invoice API: Error details:', error.message)
+    console.error('Invoice API: Error details:', error instanceof Error ? error.message : 'Unknown error')
     // Fallback to local data
     const filePath = path.join(process.cwd(), 'app/dashboard/data.json')
     const fileContents = fs.readFileSync(filePath, 'utf8')

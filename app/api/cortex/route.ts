@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
     console.log('Cortex Response:', data)
     console.log('Content array:', JSON.stringify(data.message?.content, null, 2))
-    data.message?.content?.forEach((item, index) => {
+    data.message?.content?.forEach((item: { type: string; text?: string; statement?: string; results?: unknown }, index: number) => {
       console.log(`Content item ${index}:`, item)
       console.log(`Type: ${item.type}`)
       if (item.text) console.log(`Text: ${item.text}`)
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           } catch (error) {
             enhancedResponse.push({
               type: 'text',
-              text: `Error executing query: ${error.message}`
+              text: `Error executing query: ${error instanceof Error ? error.message : 'Unknown error'}`
             })
           }
         }
@@ -99,6 +99,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ response: assistantResponse })
   } catch (error) {
     console.error('Cortex error:', error)
-    return Response.json({ response: `Error connecting to Cortex Analyst: ${error.message}` })
+    return Response.json({ response: `Error connecting to Cortex Analyst: ${error instanceof Error ? error.message : 'Unknown error'}` })
   }
 }

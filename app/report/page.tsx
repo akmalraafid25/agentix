@@ -73,7 +73,7 @@ const initialData = [
 ]
 
 export default function Page() {
-  const [pendingReviewData, setPendingReviewData] = useState([])
+  const [pendingReviewData, setPendingReviewData] = useState<any[]>([])
 
 
   useEffect(() => {
@@ -84,22 +84,22 @@ export default function Page() {
           fetch('/api/packing').then(res => res.json())
         ])
         
-        const poGroups = {}
+        const poGroups: Record<string, any> = {}
         
         // Group by purchase order number
-        invoices.forEach(invoice => {
+        invoices.forEach((invoice: any) => {
           const po = invoice.purchase_order_no
           if (!poGroups[po]) poGroups[po] = { invoice: null, packing: null }
           poGroups[po].invoice = invoice
         })
         
-        packing.forEach(pack => {
+        packing.forEach((pack: any) => {
           const po = pack.purchase_order_no
           if (!poGroups[po]) poGroups[po] = { invoice: null, packing: null }
           poGroups[po].packing = pack
         })
         
-        const combinedData = Object.entries(poGroups).map(([po, group], index) => ({
+        const combinedData = Object.entries(poGroups).map(([po, group]: [string, any], index: number) => ({
           documentSet: `DOC-${po}`,
           invoiceNo: group.invoice?.invoice_no || '',
           invoiceFilename: group.invoice?.source || '',
@@ -128,7 +128,7 @@ export default function Page() {
   }, [])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState('')
-  const [actionData, setActionData] = useState({ type: 'buyer_notify', subject: '', body: '' })
+  const [actionData, setActionData] = useState<any>({ type: 'buyer_notify', subject: '', body: '' })
   
   const updateReviewStatus = async (documentSet: string, newStatus: string) => {
     setPendingReviewData(prev => 
@@ -187,7 +187,7 @@ export default function Page() {
   
   const updateActionType = (actionType: string) => {
     const template = templates[actionType as keyof typeof templates]
-    setActionData(prev => ({
+    setActionData((prev: any) => ({
       ...prev,
       type: actionType,
       subject: template.subject,
@@ -489,7 +489,7 @@ export default function Page() {
                           <BarChart data={[{supplier: 'Acme', score: 99.5, fill: '#3b82f6'}, {supplier: 'Global Tech', score: 98.2, fill: '#06b6d4'}, {supplier: 'Prime', score: 97.8, fill: '#f97316'}, {supplier: 'Stellar', score: 96.5, fill: '#10b981'}, {supplier: 'Nexus', score: 95.1, fill: '#a855f7'}]}>
                             <XAxis dataKey="supplier" fontSize={10} />
                             <YAxis domain={[90, 100]} />
-                            <Bar dataKey="score" fill={(entry) => entry.fill} />
+                            <Bar dataKey="score" fill="#3b82f6" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

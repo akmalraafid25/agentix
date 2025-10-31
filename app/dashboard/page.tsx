@@ -16,8 +16,8 @@ import { IconRobotFace } from "@tabler/icons-react"
 
 export default function Page() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
-  const [invoiceData, setInvoiceData] = useState([])
-  const [packingData, setPackingData] = useState([])
+  const [invoiceData, setInvoiceData] = useState<unknown[]>([])
+  const [packingData, setPackingData] = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
@@ -35,7 +35,7 @@ export default function Page() {
       setInvoiceData(prev => {
         if (JSON.stringify(prev) !== JSON.stringify(newInvoices)) {
           console.log('Invoice data updated:', newInvoices.length, 'items')
-          return newInvoices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          return newInvoices.sort((a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         }
         return prev
       })
@@ -43,7 +43,7 @@ export default function Page() {
       setPackingData(prev => {
         if (JSON.stringify(prev) !== JSON.stringify(newPacking)) {
           console.log('Packing data updated:', newPacking.length, 'items')
-          return newPacking.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          return newPacking.sort((a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         }
         return prev
       })
@@ -103,7 +103,7 @@ AI Analytics
                 <div className="px-4 lg:px-6">
                   <ChartAreaInteractive />
                 </div>
-                <DataTable data={invoiceData} packingData={packingData} loading={loading} onTabChange={handleTabChange} />
+                <DataTable data={invoiceData as any} packingData={packingData as any} loading={loading} onTabChange={handleTabChange} />
               </div>
             </div>
           </div>

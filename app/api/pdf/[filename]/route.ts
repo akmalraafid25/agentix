@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       SELECT GET_PRESIGNED_URL('@STAGE_DOCUMENT', '${folder}/${filename}', 3600) AS url
     `
     
-    const result = await executeQuery(query)
+    const result = await executeQuery(query) as Record<string, unknown>[]
     const presignedUrl = result[0]?.URL
     
     if (!presignedUrl) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
     
     // Fetch the PDF from the presigned URL
-    const pdfResponse = await fetch(presignedUrl)
+    const pdfResponse = await fetch(String(presignedUrl))
     
     if (!pdfResponse.ok) {
       return new Response('PDF not found', { status: 404 })

@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function Page() {
-  const [invoiceData, setInvoiceData] = useState([])
-  const [packingData, setPackingData] = useState([])
+  const [invoiceData, setInvoiceData] = useState<any[]>([])
+  const [packingData, setPackingData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,8 +21,8 @@ export default function Page() {
           fetch('/api/invoices').then(res => res.json()),
           fetch('/api/packing').then(res => res.json())
         ])
-        setInvoiceData(Array.isArray(invoices) ? invoices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [])
-        setPackingData(Array.isArray(packing) ? packing.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [])
+        setInvoiceData(Array.isArray(invoices) ? invoices.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [])
+        setPackingData(Array.isArray(packing) ? packing.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [])
         setLoading(false)
       } catch (err) {
         console.error('API Error:', err)

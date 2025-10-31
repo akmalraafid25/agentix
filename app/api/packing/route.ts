@@ -26,7 +26,7 @@ GROUP BY
   p.CREATEDAT, p.UPDATEDAT
 ORDER BY p.CREATEDAT DESC;
     `
-    const rows = await executeQuery(query)
+    const rows = await executeQuery(query) as Record<string, unknown>[]
     
     // Transform Snowflake data to match expected schema
     const transformedData = rows.map((row: Record<string, unknown>) => ({
@@ -35,11 +35,11 @@ ORDER BY p.CREATEDAT DESC;
       invoice_no: "",
       vendor_name: row.ORGANIZATIONS || "Unknown Organization",
       purchase_order_no: row.PONUMBER || `PO-2024-${String(row.PACKING_LIST_ID).padStart(3, '0')}`,
-      item_no: row.ITEMCODES ? row.ITEMCODES.split('\n') : [],
-      quantity: row.QUANTITIES ? row.QUANTITIES.split('\n') : [],
+      item_no: row.ITEMCODES ? String(row.ITEMCODES).split('\n') : [],
+      quantity: row.QUANTITIES ? String(row.QUANTITIES).split('\n') : [],
       price: [`${row.TOTALMEASUREMENT || 0}`],
       currency: "USD",
-      created_at: row.CREATEDAT ? new Date(row.CREATEDAT).toISOString() : new Date().toISOString(),
+      created_at: row.CREATEDAT ? new Date(String(row.CREATEDAT)).toISOString() : new Date().toISOString(),
       header: `Packing List ${row.ORGANIZATIONS || 'Unknown'}`,
       type: "Packing List"
     }))

@@ -492,7 +492,7 @@ export function DataTable({
     }
   })
 
-  const packingColumns = columns.filter(col => 
+  const packingColumns = columns.filter((col: any) => 
     !['invoice_no', 'price', 'currency', 'total_amount'].includes(col.accessorKey as string)
   )
 

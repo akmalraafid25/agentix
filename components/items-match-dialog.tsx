@@ -29,9 +29,9 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
         const response = await fetch('/api/invoice-items')
         const allItems = await response.json()
         
-        const itemsWithMatch = allItems.map(item => {
-          const hasInvoice = invoices.some(inv => inv.purchase_order_no === item.poNumber)
-          const hasPacking = packing.some(pack => pack.purchase_order_no === item.poNumber)
+        const itemsWithMatch = allItems.map((item: any) => {
+          const hasInvoice = invoices.some((inv: any) => inv.purchase_order_no === item.poNumber)
+          const hasPacking = packing.some((pack: any) => pack.purchase_order_no === item.poNumber)
           return {
             ...item,
             matchPL: hasInvoice && hasPacking,
@@ -39,7 +39,7 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
           }
         })
         
-        const filteredItems = itemsWithMatch.filter(item => 
+        const filteredItems = itemsWithMatch.filter((item: any) => 
           documentSet.includes(item.invoiceNo) || documentSet.includes(item.poNumber)
         )
         setItemsData(filteredItems.length > 0 ? filteredItems : itemsWithMatch.slice(0, 5))
@@ -76,7 +76,7 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {itemsData.map((item, index) => (
+              {itemsData.map((item: any, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.poNumber}</TableCell>
                   <TableCell>{item.itemCode}</TableCell>

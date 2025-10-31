@@ -84,7 +84,7 @@ export function AnalyticsSidebar({ isOpen, onClose }: AnalyticsSidebarProps) {
               content += '<table class="min-w-full border border-gray-300 text-xs">'
               content += '<thead><tr>' + headers.map(h => `<th class="border border-gray-300 px-1 py-1 text-left">${h}</th>`).join('') + '</tr></thead>'
               content += '<tbody>'
-              item.results.forEach(row => {
+              item.results.forEach((row: any) => {
                 content += '<tr>' + headers.map(h => `<td class="border border-gray-300 px-1 py-1">${row[h] || ''}</td>`).join('') + '</tr>'
               })
               content += '</tbody></table></div>'
