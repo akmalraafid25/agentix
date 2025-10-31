@@ -133,3 +133,8 @@ This project is licensed under the MIT License.
 ## Support
 
 For support and questions, please contact the development team or create an issue in the repository.
+
+# DEMO APP
+
+To try the app, you can visit this:
+master.d2gsbftap58rgk.amplifyapp.com
