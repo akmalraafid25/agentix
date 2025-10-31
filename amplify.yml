@@ -6,11 +6,32 @@ frontend:
         - npm ci
     build:
       commands:
+        # === Write environment variables to .env ===
+        - echo "SNOWFLAKE_ACCOUNT=$SNOWFLAKE_ACCOUNT" >> .env
+        - echo "SNOWFLAKE_TOKEN=$SNOWFLAKE_TOKEN" >> .env
+        - echo "SNOWFLAKE_USER=$SNOWFLAKE_USER" >> .env
+        - echo "SNOWFLAKE_CLIENT_ID=$SNOWFLAKE_CLIENT_ID" >> .env
+        - echo "SNOWFLAKE_PASSWORD=$SNOWFLAKE_PASSWORD" >> .env
+        - echo "SNOWFLAKE_DATABASE=$SNOWFLAKE_DATABASE" >> .env
+        - echo "SNOWFLAKE_SCHEMA=$SNOWFLAKE_SCHEMA" >> .env
+        - echo "SNOWFLAKE_WAREHOUSE=$SNOWFLAKE_WAREHOUSE" >> .env
+        - echo "SNOWFLAKE_REDIRECT_URI=$SNOWFLAKE_REDIRECT_URI" >> .env
+        - echo "SNOWFLAKE_PRIVATE_KEY=$SNOWFLAKE_PRIVATE_KEY" >> .env
+
+        # === Verify .env creation ===
+        - echo "===== .env file created ====="
+        - cat .env || echo ".env not found!"
+        - echo "============================="
+
+        # === Build your Next.js app ===
         - npm run build
+
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
+
   cache:
     paths:
-      - node_modules/**/*
+      - '.next/cache/**/*'
+      - '.npm/**/*'
