@@ -52,7 +52,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 import { AddInvoiceDialog } from "@/components/add-invoice-dialog"
 
-import { useIsMobile } from "@/hooks/use-mobile"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {

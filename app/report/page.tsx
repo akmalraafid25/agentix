@@ -266,7 +266,7 @@ export default function Page() {
                           <TableHead>Vendor</TableHead>
                           <TableHead>Amount (IDR)</TableHead>
                           <TableHead>Exception Details</TableHead>
-                          <TableHead>Agent's Action</TableHead>
+                          <TableHead>Agent&apos;s Action</TableHead>
                           <TableHead>ERP Match</TableHead>
                           <TableHead>Review Status</TableHead>
                           <TableHead>Actions</TableHead>

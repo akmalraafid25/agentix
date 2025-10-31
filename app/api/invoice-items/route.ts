@@ -2,7 +2,7 @@ import { executeQuery } from '@/lib/snowflake'
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
+
 
 
     
