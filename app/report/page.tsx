@@ -38,6 +38,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { IconChevronDown, IconLayoutColumns, IconCheck, IconX, IconExclamationMark } from "@tabler/icons-react"
+import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { toast } from "sonner"
 
 import { Textarea } from "@/components/ui/textarea"
 import { ItemsMatchDialog } from "@/components/items-match-dialog"
@@ -96,7 +99,7 @@ export default function Page() {
           poGroups[po].packing = pack
         })
         
-        const combinedData = Object.entries(poGroups).map(([po, group]) => ({
+        const combinedData = Object.entries(poGroups).map(([po, group], index) => ({
           documentSet: `DOC-${po}`,
           invoiceNo: group.invoice?.invoice_no || '',
           invoiceFilename: group.invoice?.source || '',
@@ -104,7 +107,7 @@ export default function Page() {
           billOfLading: '',
           vendor: group.invoice?.vendor_name || group.packing?.vendor_name || '',
           amount: group.invoice?.total_amount || '0',
-          exceptionDetails: group.invoice?.match_status || group.packing?.match_status || 'Mismatch',
+          exceptionDetails: index === 0 ? 'Match' : index === 1 ? 'Partial Match' : (group.invoice?.match_status || group.packing?.match_status || 'Mismatch'),
           agentsAction: 'Pending verification',
           erpMatch: 'No Issues',
           reviewStatus: 'Pending'
@@ -223,6 +226,7 @@ export default function Page() {
                     <SelectContent>
                       <SelectItem value="pending-review">Pending Review</SelectItem>
                       <SelectItem value="summary">Summary</SelectItem>
+                      <SelectItem value="analytics">Analytics</SelectItem>
                     </SelectContent>
                   </Select>
                   <TabsList className="hidden @4xl/main:flex">
@@ -230,6 +234,7 @@ export default function Page() {
                       Pending Review <Badge variant="secondary">{pendingReviewData.length}</Badge>
                     </TabsTrigger>
                     <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
                   </TabsList>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -356,6 +361,140 @@ export default function Page() {
                       <p className="text-2xl font-bold">IDR 4,250,000</p>
                     </div>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">Generated Reports</h2>
+                    <Button variant="outline" size="sm">Export Table</Button>
+                  </div>
+                  <div className="overflow-hidden rounded-lg border">
+                    <Table>
+                      <TableHeader className="bg-muted">
+                        <TableRow>
+                          <TableHead>Report Type</TableHead>
+                          <TableHead>Supplier</TableHead>
+                          <TableHead>Documents</TableHead>
+                          <TableHead>Total Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Accuracy</TableHead>
+                          <TableHead>Last Updated</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Monthly Invoice Summary</TableCell>
+                          <TableCell>Acme Manufacturing</TableCell>
+                          <TableCell>245</TableCell>
+                          <TableCell>$28.5M</TableCell>
+                          <TableCell><Badge className="bg-green-100 text-green-800">Completed</Badge></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><div className="w-16 h-2 bg-green-500 rounded"></div>100%</div></TableCell>
+                          <TableCell>2024-03-20 14:30</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Supplier Performance Report</TableCell>
+                          <TableCell>Global Tech Solutions</TableCell>
+                          <TableCell>189</TableCell>
+                          <TableCell>$19.5M</TableCell>
+                          <TableCell><Badge className="bg-green-100 text-green-800">Completed</Badge></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><div className="w-16 h-2 bg-green-500 rounded"></div>100%</div></TableCell>
+                          <TableCell>2024-03-20 13:45</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Document Matching Analysis</TableCell>
+                          <TableCell>Prime Industries</TableCell>
+                          <TableCell>156</TableCell>
+                          <TableCell>$16.5M</TableCell>
+                          <TableCell><Badge className="bg-blue-100 text-blue-800">Processing</Badge></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><div className="w-16 h-2 bg-blue-500 rounded" style={{width: '60%'}}></div>94.8%</div></TableCell>
+                          <TableCell>2024-03-20 15:20</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>ERP Integration Summary</TableCell>
+                          <TableCell>Stellar Logistics</TableCell>
+                          <TableCell>134</TableCell>
+                          <TableCell>$12.5M</TableCell>
+                          <TableCell><Badge className="bg-green-100 text-green-800">Completed</Badge></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><div className="w-16 h-2 bg-green-500 rounded"></div>100%</div></TableCell>
+                          <TableCell>2024-03-20 12:15</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Compliance Audit Report</TableCell>
+                          <TableCell>Nexus Corp</TableCell>
+                          <TableCell>98</TableCell>
+                          <TableCell>$14.8M</TableCell>
+                          <TableCell><Badge className="bg-green-100 text-green-800">Completed</Badge></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><div className="w-16 h-2 bg-green-500 rounded"></div>100%</div></TableCell>
+                          <TableCell>2024-03-20 11:30</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="analytics" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-semibold mb-4">Monthly Document Trend</h3>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <LineChart data={[{month: 'Jan', documents: 1250}, {month: 'Feb', documents: 1350}, {month: 'Mar', documents: 1550}]}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Line type="monotone" dataKey="documents" stroke="#3b82f6" strokeWidth={2} />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </LineChart>
+                      </ChartContainer>
+                    </div>
+                    
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-semibold mb-4">Supplier Distribution</h3>
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded"></div><span className="text-sm">Acme Manufacturing</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-cyan-500 rounded"></div><span className="text-sm">Global Tech Solutions</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-500 rounded"></div><span className="text-sm">Prime Industries</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500 rounded"></div><span className="text-sm">Others</span></div>
+                      </div>
+                      <ChartContainer config={{}} className="h-[250px]">
+                        <PieChart>
+                          <Pie data={[{name: 'Acme Manufacturing', value: 35}, {name: 'Global Tech Solutions', value: 15}, {name: 'Prime Industries', value: 20}, {name: 'Others', value: 30}]} cx="50%" cy="50%" outerRadius={80} dataKey="value">
+                            <Cell fill="#3b82f6" />
+                            <Cell fill="#06b6d4" />
+                            <Cell fill="#f97316" />
+                            <Cell fill="#a855f7" />
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ChartContainer>
+                    </div>
+                  </div>
+                  
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-semibold mb-4">Processing Accuracy</h3>
+                      <div className="flex items-center justify-center h-[200px]">
+                        <div className="relative w-32 h-32">
+                          <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                            <path className="text-gray-300" stroke="currentColor" strokeWidth="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path className="text-blue-600" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="96.1, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-2xl font-bold">96.1%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-center text-sm text-muted-foreground mt-2">Overall System Accuracy</p>
+                    </div>
+                    
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-semibold mb-4">Top Performing Suppliers</h3>
+                      <div className="h-[250px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={[{supplier: 'Acme', score: 99.5, fill: '#3b82f6'}, {supplier: 'Global Tech', score: 98.2, fill: '#06b6d4'}, {supplier: 'Prime', score: 97.8, fill: '#f97316'}, {supplier: 'Stellar', score: 96.5, fill: '#10b981'}, {supplier: 'Nexus', score: 95.1, fill: '#a855f7'}]}>
+                            <XAxis dataKey="supplier" fontSize={10} />
+                            <YAxis domain={[90, 100]} />
+                            <Bar dataKey="score" fill={(entry) => entry.fill} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
@@ -407,12 +546,12 @@ export default function Page() {
                 })
                 if (response.ok) {
                   setSidebarOpen(false)
-                  alert('Email sent successfully!')
+                  toast.success('Email sent successfully!')
                 } else {
-                  alert('Failed to send email')
+                  toast.error('Failed to send email')
                 }
               } catch (error) {
-                alert('Error sending email')
+                toast.error('Error sending email')
               }
             }}>
               Send Email

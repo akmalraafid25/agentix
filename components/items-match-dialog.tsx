@@ -31,13 +31,28 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
   useEffect(() => {
     const fetchItems = async () => {
       try {
+        const [invoices, packing] = await Promise.all([
+          fetch('/api/invoices').then(res => res.json()),
+          fetch('/api/packing').then(res => res.json())
+        ])
+        
         const response = await fetch('/api/invoice-items')
         const allItems = await response.json()
-        // Filter items based on documentSet (assuming it contains invoice info)
-        const filteredItems = allItems.filter(item => 
+        
+        const itemsWithMatch = allItems.map(item => {
+          const hasInvoice = invoices.some(inv => inv.purchase_order_no === item.poNumber)
+          const hasPacking = packing.some(pack => pack.purchase_order_no === item.poNumber)
+          return {
+            ...item,
+            matchPL: hasInvoice && hasPacking,
+            matchERP: true
+          }
+        })
+        
+        const filteredItems = itemsWithMatch.filter(item => 
           documentSet.includes(item.invoiceNo) || documentSet.includes(item.poNumber)
         )
-        setItemsData(filteredItems.length > 0 ? filteredItems : allItems.slice(0, 5))
+        setItemsData(filteredItems.length > 0 ? filteredItems : itemsWithMatch.slice(0, 5))
       } catch (error) {
         console.error('Error fetching items:', error)
       }

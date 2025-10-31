@@ -8,6 +8,7 @@ export async function GET() {
     const query = `
     SELECT
         inv.ID AS INVOICE_ID,
+        MAX(inv.VENDORNAME) as VENDOR_NAME,
         inv.INVOICENO AS INVOICE_NO,
         inv.PONUMBER AS PO_NUMBER,
         inv.SOURCE,
@@ -20,6 +21,7 @@ export async function GET() {
     FROM (
         SELECT 
             ID,
+            VENDORNAME,
             INVOICENO,
             PONUMBER,
             SOURCE,
@@ -43,7 +45,7 @@ export async function GET() {
       id: row.INVOICE_ID,
       source: row.SOURCE ? `${row.SOURCE}` : `invoice_${String(row.INVOICE_ID).padStart(3, '0')}`,
       invoice_no: row.INVOICE_NO || `-`,
-      vendor_name: "SoftwareOne Indonesia",
+      vendor_name: `${row.VENDOR_NAME}`,
       purchase_order_no: row.PO_NUMBER,
       item_no: row.ITEM_CODES ? row.ITEM_CODES.split(', ') : [],
       quantity: row.QUANTITIES ? row.QUANTITIES.split(', ') : [],

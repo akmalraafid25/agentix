@@ -564,21 +564,25 @@ export function DataTable({
             <SelectValue placeholder="Select a view" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="outline">Invoice</SelectItem>
-            <SelectItem value="past-performance">Packing List</SelectItem>
-            <SelectItem value="key-personnel">Bill of Lading</SelectItem>
-            <SelectItem value="focus-documents">Progress</SelectItem>
+            <SelectItem value="outline">Invoice ({data.length})</SelectItem>
+            <SelectItem value="past-performance">Packing List ({packingTableData.length})</SelectItem>
+            <SelectItem value="key-personnel">Bill of Lading (0)</SelectItem>
+            <SelectItem value="focus-documents">Progress (0)</SelectItem>
           </SelectContent>
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="outline">Invoice</TabsTrigger>
+          <TabsTrigger value="outline">
+            Invoice <Badge variant="secondary">{data.length}</Badge>
+          </TabsTrigger>
           <TabsTrigger value="past-performance">
-            Packing List <Badge variant="secondary">3</Badge>
+            Packing List <Badge variant="secondary">{packingTableData.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
-            Bill of Lading <Badge variant="secondary">2</Badge>
+            Bill of Lading <Badge variant="secondary">0</Badge>
           </TabsTrigger>
-          <TabsTrigger value="focus-documents">Progress</TabsTrigger>
+          <TabsTrigger value="focus-documents">
+            Progress <Badge variant="secondary">0</Badge>
+          </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
