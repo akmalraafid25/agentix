@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     })
     
     return Response.json({ success: true })
-  } catch (error) {
+  } catch {
     return Response.json({ error: 'Webhook failed' }, { status: 500 })
   }
 }
