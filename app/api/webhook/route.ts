@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { executeQuery } from '../../../lib/snowflake'
+
 
 export async function POST(request: NextRequest) {
   try {

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         'Cache-Control': 'public, max-age=3600',
       },
     })
-  } catch (error) {
+  } catch {
     return new Response('Error fetching PDF', { status: 500 })
   }
 }
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
     
     return Response.json({ success: true, metadata })
-  } catch (error) {
+  } catch {
     return new Response('Upload failed', { status: 500 })
   }
 }

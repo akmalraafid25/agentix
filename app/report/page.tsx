@@ -74,7 +74,7 @@ const initialData = [
 
 export default function Page() {
   const [pendingReviewData, setPendingReviewData] = useState([])
-  const [loading, setLoading] = useState(true)
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -550,7 +550,7 @@ export default function Page() {
                 } else {
                   toast.error('Failed to send email')
                 }
-              } catch (error) {
+              } catch {
                 toast.error('Error sending email')
               }
             }}>

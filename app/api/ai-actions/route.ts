@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     console.log(`Body: ${template.body}`)
     
     return Response.json({ success: true, action, documentSet })
-  } catch (error) {
+  } catch {
     return Response.json({ error: 'AI Action failed' }, { status: 500 })
   }
 }

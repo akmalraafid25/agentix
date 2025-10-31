@@ -41,7 +41,7 @@ export async function GET() {
     console.log('Invoice API: Sample row:', rows[0])
     
     // Transform Snowflake data to match expected schema
-    const transformedData = rows.map((row: any) => ({
+    const transformedData = rows.map((row: Record<string, unknown>) => ({
       id: row.INVOICE_ID,
       source: row.SOURCE ? `${row.SOURCE}` : `invoice_${String(row.INVOICE_ID).padStart(3, '0')}`,
       invoice_no: row.INVOICE_NO || `-`,

@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const documentSet = searchParams.get('documentSet')
-    const invoiceNo = documentSet?.replace('DOC-', '') || ''
+
     
     const query = `
       SELECT 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     
     const rows = await executeQuery(query)
     
-    const transformedData = rows.map((row: any) => ({
+    const transformedData = rows.map((row: Record<string, unknown>) => ({
       poNumber: row.PONO,
       itemCode: row.ITEMCODE,
       quantity: row.QUANTITY,

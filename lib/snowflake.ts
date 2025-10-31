@@ -38,10 +38,10 @@ export async function executeQuery(query: string) {
   })
 }
 
-function executeQueryInternal(conn: any, query: string, resolve: any, reject: any) {
+function executeQueryInternal(conn: snowflake.Connection, query: string, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) {
   conn.execute({
     sqlText: query,
-    complete: (err: any, stmt: any, rows: any) => {
+    complete: (err: unknown, stmt: unknown, rows: unknown) => {
       if (err) {
         reject(err)
       } else {

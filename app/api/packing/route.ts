@@ -29,7 +29,7 @@ ORDER BY p.CREATEDAT DESC;
     const rows = await executeQuery(query)
     
     // Transform Snowflake data to match expected schema
-    const transformedData = rows.map((row: any) => ({
+    const transformedData = rows.map((row: Record<string, unknown>) => ({
       id: row.PACKING_LIST_ID,
       source: row.SOURCE || `packing_${String(row.PACKING_LIST_ID).padStart(3, '0')}.pdf`,
       invoice_no: "",
