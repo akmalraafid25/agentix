@@ -137,4 +137,4 @@ For support and questions, please contact the development team or create an issu
 # DEMO APP
 
 To try the app, you can visit this:
-master.d2gsbftap58rgk.amplifyapp.com
+https://master.d2gsbftap58rgk.amplifyapp.com
