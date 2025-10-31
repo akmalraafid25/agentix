@@ -1,18 +1,25 @@
 import snowflake from 'snowflake-sdk'
 
-const connection = snowflake.createConnection({
-  account: process.env.SNOWFLAKE_ACCOUNT!,
-  username: process.env.SNOWFLAKE_USER!,
-  authenticator: 'SNOWFLAKE_JWT',
-  privateKey: process.env.SNOWFLAKE_PRIVATE_KEY!,
-  database: process.env.SNOWFLAKE_DATABASE!,
-  schema: process.env.SNOWFLAKE_SCHEMA!,
-  warehouse: process.env.SNOWFLAKE_WAREHOUSE!,
-})
+let connection: snowflake.Connection | null = null
+
+function getConnection() {
+  if (!connection) {
+    connection = snowflake.createConnection({
+      account: process.env.SNOWFLAKE_ACCOUNT!.toLowerCase(),
+      username: process.env.SNOWFLAKE_USER!,
+      password: process.env.SNOWFLAKE_PASSWORD!,
+      database: process.env.SNOWFLAKE_DATABASE!,
+      schema: process.env.SNOWFLAKE_SCHEMA!,
+      warehouse: process.env.SNOWFLAKE_WAREHOUSE!,
+    })
+  }
+  return connection
+}
 
 export async function connectToSnowflake() {
   return new Promise((resolve, reject) => {
-    connection.connect((err, conn) => {
+    const conn = getConnection()
+    conn.connect((err, conn) => {
       if (err) {
         reject(err)
       } else {
@@ -24,8 +31,9 @@ export async function connectToSnowflake() {
 
 export async function executeQuery(query: string) {
   return new Promise((resolve, reject) => {
-    if (!connection.isUp()) {
-      connection.connect((err, conn) => {
+    const conn = getConnection()
+    if (!conn.isUp()) {
+      conn.connect((err, conn) => {
         if (err) {
           reject(err)
           return
@@ -33,7 +41,7 @@ export async function executeQuery(query: string) {
         executeQueryInternal(conn, query, resolve, reject)
       })
     } else {
-      executeQueryInternal(connection, query, resolve, reject)
+      executeQueryInternal(conn, query, resolve, reject)
     }
   })
 }
@@ -51,4 +59,4 @@ function executeQueryInternal(conn: snowflake.Connection, query: string, resolve
   })
 }
 
-export { connection }
+export { getConnection }
