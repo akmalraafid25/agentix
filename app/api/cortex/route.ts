@@ -4,9 +4,9 @@ import crypto from 'crypto'
 import { executeQuery } from '../../../lib/snowflake'
 
 function generateJWT() {
-  const privateKey = process.env.SNOWFLAKE_PRIVATE_KEY?.replace(/\\n/g, '\n') || ''
-  const account = process.env.SNOWFLAKE_ACCOUNT || ''
-  const user = process.env.SNOWFLAKE_USER || ''
+  const privateKey = process.env.SNOWFLAKE_PRIVATE_KEY!.replace(/\\n/g, '\n')
+  const account = process.env.SNOWFLAKE_ACCOUNT!
+  const user = process.env.SNOWFLAKE_USER!
   
   const publicKeyFingerprint = crypto
     .createPublicKey(privateKey)
@@ -25,11 +25,6 @@ function generateJWT() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if required environment variables exist
-    if (!process.env.SNOWFLAKE_PRIVATE_KEY || !process.env.SNOWFLAKE_ACCOUNT || !process.env.SNOWFLAKE_USER) {
-      return Response.json({ response: 'Cortex service not configured' }, { status: 503 })
-    }
-    
     const { message } = await request.json()
     const token = generateJWT()
     
