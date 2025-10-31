@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverComponentsExternalPackages: ['snowflake-sdk']
+  },
+  webpack: (config) => {
+    config.externals.push({
+      'snowflake-sdk': 'commonjs snowflake-sdk'
+    })
+    return config
+  }
 };
 
 export default nextConfig;
