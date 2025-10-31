@@ -7,6 +7,7 @@ export async function GET() {
     const query = `
     SELECT
   p.ID AS PACKING_LIST_ID,
+  p.PONUMBER,
   p.ORGANIZATIONS,
   p.SOURCE,
   p.TOTALCARTON,
@@ -20,7 +21,7 @@ FROM PACKING_LISTS p
 LEFT JOIN PACKING_LIST_ITEMS i
   ON p.ID = i.PACKING_LIST_ID
 GROUP BY
-  p.ID, p.ORGANIZATIONS, p.SOURCE,
+  p.ID, p.PONUMBER, p.ORGANIZATIONS, p.SOURCE,
   p.TOTALCARTON, p.TOTALGROSSWEIGHT, p.TOTALMEASUREMENT,
   p.CREATEDAT, p.UPDATEDAT
 ORDER BY p.CREATEDAT DESC;
@@ -31,14 +32,14 @@ ORDER BY p.CREATEDAT DESC;
     const transformedData = rows.map((row: any) => ({
       id: row.PACKING_LIST_ID,
       source: row.SOURCE || `packing_${String(row.PACKING_LIST_ID).padStart(3, '0')}.pdf`,
-      invoice_no: `INV-2024-${String(row.PACKING_LIST_ID).padStart(3, '0')}`,
+      invoice_no: "",
       vendor_name: row.ORGANIZATIONS || "Unknown Organization",
-      purchase_order_no: `PO-2024-${String(row.PACKING_LIST_ID).padStart(3, '0')}`,
+      purchase_order_no: row.PONUMBER || `PO-2024-${String(row.PACKING_LIST_ID).padStart(3, '0')}`,
       item_no: row.ITEMCODES ? row.ITEMCODES.split('\n') : [],
       quantity: row.QUANTITIES ? row.QUANTITIES.split('\n') : [],
       price: [`${row.TOTALMEASUREMENT || 0}`],
       currency: "USD",
-      created_at: row.CREATEDAT ? new Date(row.CREATEDAT).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      created_at: row.CREATEDAT ? new Date(row.CREATEDAT).toISOString() : new Date().toISOString(),
       header: `Packing List ${row.ORGANIZATIONS || 'Unknown'}`,
       type: "Packing List"
     }))

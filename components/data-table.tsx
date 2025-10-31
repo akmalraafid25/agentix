@@ -121,6 +121,7 @@ export const schema = z.object({
   created_at: z.string(),
   header: z.string(),
   type: z.string(),
+  total_amount: z.string(),
 })
 
 // Create a separate component for the drag handle
@@ -318,6 +319,15 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
   },
   {
+    accessorKey: "total_amount",
+    header: "Total Amount",
+    cell: ({ row }) => (
+      <div className="text-right">
+        ${row.original.total_amount}
+      </div>
+    ),
+  },
+  {
     accessorKey: "created_at",
     header: ({ column }) => (
       <Button
@@ -337,7 +347,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
     cell: ({ row }) => (
       <div>
-        {row.original.created_at}
+        {new Date(row.original.created_at).toLocaleString()}
       </div>
     ),
   },
@@ -398,10 +408,12 @@ export function DataTable({
   data: initialData,
   packingData = [],
   loading = false,
+  onTabChange,
 }: {
   data: z.infer<typeof schema>[]
   packingData?: z.infer<typeof schema>[]
   loading?: boolean
+  onTabChange?: (tab: string) => void
 }) {
   const [packingTableData, setPackingTableData] = React.useState(() => packingData)
 
@@ -419,7 +431,8 @@ export function DataTable({
   }, [initialData])
 
   const handleAddInvoice = (newInvoice: z.infer<typeof schema>) => {
-    setData(prev => [...prev, newInvoice])
+    // Data will be refreshed automatically via polling
+    // No manual insertion needed
   }
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -485,9 +498,13 @@ export function DataTable({
     }
   })
 
+  const packingColumns = columns.filter(col => 
+    !['invoice_no', 'price', 'currency', 'total_amount'].includes(col.accessorKey as string)
+  )
+
   const packingTable = useReactTable({
     data: packingTableData,
-    columns,
+    columns: packingColumns,
     state: {
       sorting,
       columnVisibility,
@@ -532,6 +549,7 @@ export function DataTable({
     <Tabs
       defaultValue="outline"
       className="w-full flex-col justify-start gap-6"
+      onValueChange={onTabChange}
     >
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
@@ -547,7 +565,7 @@ export function DataTable({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="outline">Invoice</SelectItem>
-            <SelectItem value="past-performance">Purchase Order</SelectItem>
+            <SelectItem value="past-performance">Packing List</SelectItem>
             <SelectItem value="key-personnel">Bill of Lading</SelectItem>
             <SelectItem value="focus-documents">Progress</SelectItem>
           </SelectContent>
@@ -555,7 +573,7 @@ export function DataTable({
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="outline">Invoice</TabsTrigger>
           <TabsTrigger value="past-performance">
-            Purchase Order <Badge variant="secondary">3</Badge>
+            Packing List <Badge variant="secondary">3</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
             Bill of Lading <Badge variant="secondary">2</Badge>
@@ -788,7 +806,7 @@ export function DataTable({
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={packingColumns.length}
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -808,8 +826,8 @@ export function DataTable({
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No Purchase Order data available.
+                    <TableCell colSpan={packingColumns.length} className="h-24 text-center">
+                      No Packing List data available.
                     </TableCell>
                   </TableRow>
                 )}
@@ -1042,7 +1060,7 @@ function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onU
     <Drawer direction="right">
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.header}
+          {item.source}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full" style={{ width: '80vw', maxWidth: 'none' }}>
@@ -1050,7 +1068,7 @@ function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onU
           <div className="flex-1 flex flex-col gap-3">
             <div className="border rounded-lg overflow-hidden flex-1">
               <iframe
-                src={`/api/pdf/${item.type === 'Invoice' ? 'inv5.pdf' : 'PL7.pdf'}`}
+                src={`/api/pdf/${item.source}`}
                 className="w-full h-full border-0"
                 title={`Document - ${item.source}`}
               />

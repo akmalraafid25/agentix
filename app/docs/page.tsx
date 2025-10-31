@@ -23,29 +23,35 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/invoices').then(res => res.json()),
-      fetch('/api/packing').then(res => res.json())
-    ])
-      .then(([invoices, packing]) => {
-        setInvoiceData(Array.isArray(invoices) ? invoices : [])
-        setPackingData(Array.isArray(packing) ? packing : [])
-      })
-      .catch(err => {
+    const fetchData = async () => {
+      try {
+        const [invoices, packing] = await Promise.all([
+          fetch('/api/invoices').then(res => res.json()),
+          fetch('/api/packing').then(res => res.json())
+        ])
+        setInvoiceData(Array.isArray(invoices) ? invoices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [])
+        setPackingData(Array.isArray(packing) ? packing.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : [])
+        setLoading(false)
+      } catch (err) {
         console.error('API Error:', err)
         setInvoiceData([])
         setPackingData([])
-      })
-      .finally(() => {
         setLoading(false)
-      })
+      }
+    }
+
+    fetchData()
+    const interval = setInterval(fetchData, 5000)
+    return () => clearInterval(interval)
   }, [])
+
+
 
   return (
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--sidebar-width": "14rem",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }

@@ -20,24 +20,58 @@ export default function Page() {
   const [packingData, setPackingData] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const fetchData = async () => {
+    try {
+      console.log('Polling for new data...')
+      const [invoices, packing] = await Promise.all([
+        fetch('/api/invoices').then(res => res.json()),
+        fetch('/api/packing').then(res => res.json())
+      ])
+      
+      const newInvoices = Array.isArray(invoices) ? invoices : []
+      const newPacking = Array.isArray(packing) ? packing : []
+      
+      // Only update if data has changed
+      setInvoiceData(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(newInvoices)) {
+          console.log('Invoice data updated:', newInvoices.length, 'items')
+          return newInvoices.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        }
+        return prev
+      })
+      
+      setPackingData(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(newPacking)) {
+          console.log('Packing data updated:', newPacking.length, 'items')
+          return newPacking.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        }
+        return prev
+      })
+    } catch (err) {
+      console.error('API Error:', err)
+      setInvoiceData([])
+      setPackingData([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    Promise.all([
-      fetch('/api/invoices').then(res => res.json()),
-      fetch('/api/packing').then(res => res.json())
-    ])
-      .then(([invoices, packing]) => {
-        setInvoiceData(Array.isArray(invoices) ? invoices : [])
-        setPackingData(Array.isArray(packing) ? packing : [])
-      })
-      .catch(err => {
-        console.error('API Error:', err)
-        setInvoiceData([])
-        setPackingData([])
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    fetchData()
+    
+    // Set up polling every 3 seconds to check for new data
+    const interval = setInterval(() => {
+      setLoading(false) // Don't show loading on polling updates
+      fetchData()
+    }, 5000)
+    
+    return () => clearInterval(interval)
   }, [])
+
+  const handleTabChange = (tab: string) => {
+    // Tab change will use the already polling data
+    // No need to manually fetch again
+  }
 
   return (
     <SidebarProvider
@@ -69,7 +103,7 @@ AI Analytics
                 <div className="px-4 lg:px-6">
                   <ChartAreaInteractive />
                 </div>
-                <DataTable data={invoiceData} packingData={packingData} loading={loading} />
+                <DataTable data={invoiceData} packingData={packingData} loading={loading} onTabChange={handleTabChange} />
               </div>
             </div>
           </div>

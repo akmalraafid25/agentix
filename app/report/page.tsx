@@ -40,6 +40,7 @@ import {
 import { IconChevronDown, IconLayoutColumns, IconCheck, IconX, IconExclamationMark } from "@tabler/icons-react"
 
 import { Textarea } from "@/components/ui/textarea"
+import { ItemsMatchDialog } from "@/components/items-match-dialog"
 
 const initialData = [
   {
@@ -69,7 +70,59 @@ const initialData = [
 ]
 
 export default function Page() {
-  const [pendingReviewData, setPendingReviewData] = useState(initialData)
+  const [pendingReviewData, setPendingReviewData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [invoices, packing] = await Promise.all([
+          fetch('/api/invoices').then(res => res.json()),
+          fetch('/api/packing').then(res => res.json())
+        ])
+        
+        const poGroups = {}
+        
+        // Group by purchase order number
+        invoices.forEach(invoice => {
+          const po = invoice.purchase_order_no
+          if (!poGroups[po]) poGroups[po] = { invoice: null, packing: null }
+          poGroups[po].invoice = invoice
+        })
+        
+        packing.forEach(pack => {
+          const po = pack.purchase_order_no
+          if (!poGroups[po]) poGroups[po] = { invoice: null, packing: null }
+          poGroups[po].packing = pack
+        })
+        
+        const combinedData = Object.entries(poGroups).map(([po, group]) => ({
+          documentSet: `DOC-${po}`,
+          invoiceNo: group.invoice?.invoice_no || '',
+          invoiceFilename: group.invoice?.source || '',
+          packingList: group.packing?.source || '',
+          billOfLading: '',
+          vendor: group.invoice?.vendor_name || group.packing?.vendor_name || '',
+          amount: group.invoice?.total_amount || '0',
+          exceptionDetails: group.invoice?.match_status || group.packing?.match_status || 'Mismatch',
+          agentsAction: 'Pending verification',
+          erpMatch: 'No Issues',
+          reviewStatus: 'Pending'
+        }))
+        
+        setPendingReviewData(combinedData)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        setPendingReviewData(initialData)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+    const interval = setInterval(fetchData, 5000)
+    return () => clearInterval(interval)
+  }, [])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState('')
   const [actionData, setActionData] = useState({ type: 'buyer_notify', subject: '', body: '' })
@@ -87,41 +140,62 @@ export default function Page() {
   const templates = {
     buyer_notify: {
       subject: 'Document Review Required',
-      body: 'Dear Buyer,\n\nPlease review the document set for processing. Your attention is required to proceed with the order.\n\nBest regards,\nSystem'
+      body: (documentSet: string, invoiceNo: string, packingList: string) => 
+        `Dear Buyer,\n\nPlease review the following document set for processing:\n\n` +
+        `Document Set: ${documentSet}\n` +
+        `Invoice Number: ${invoiceNo}\n` +
+        `Packing List: ${packingList}\n\n` +
+        `Your attention is required to proceed with the order.\n\n` +
+        `Best regards,\nSystem`
     },
     vendor_response: {
       subject: 'Vendor Response Required',
-      body: 'Dear Vendor,\n\nWe require additional information for this document set. Please provide the missing details at your earliest convenience.\n\nBest regards,\nProcurement Team'
+      body: (documentSet: string, invoiceNo: string, packingList: string) => 
+        `Dear Vendor,\n\nWe require additional information for the following document set:\n\n` +
+        `Document Set: ${documentSet}\n` +
+        `Invoice Number: ${invoiceNo}\n` +
+        `Packing List: ${packingList}\n\n` +
+        `Please provide the missing details at your earliest convenience.\n\n` +
+        `Best regards,\nProcurement Team`
     },
     po_amendment: {
       subject: 'PO Amendment Request',
-      body: 'Dear Team,\n\nPurchase order amendment is required for this document set. Please review and approve the changes.\n\nBest regards,\nProcurement Team'
+      body: (documentSet: string, invoiceNo: string, packingList: string) => 
+        `Dear Team,\n\nPurchase order amendment is required for the following document set:\n\n` +
+        `Document Set: ${documentSet}\n` +
+        `Invoice Number: ${invoiceNo}\n` +
+        `Packing List: ${packingList}\n\n` +
+        `Please review and approve the changes.\n\n` +
+        `Best regards,\nProcurement Team`
     }
   }
   
-  const handleAIAction = (documentSet: string) => {
+  const handleAIAction = (documentSet: string, invoiceFilename?: string, packingList?: string) => {
     setSelectedDocument(documentSet)
     setActionData({
       type: 'buyer_notify',
       subject: templates.buyer_notify.subject,
-      body: templates.buyer_notify.body
+      body: templates.buyer_notify.body(documentSet, invoiceFilename || '', packingList || ''),
+      invoiceFilename: invoiceFilename || '',
+      packingList: packingList || ''
     })
     setSidebarOpen(true)
   }
   
   const updateActionType = (actionType: string) => {
     const template = templates[actionType as keyof typeof templates]
-    setActionData({
+    setActionData(prev => ({
+      ...prev,
       type: actionType,
       subject: template.subject,
-      body: template.body
-    })
+      body: template.body(selectedDocument, prev.invoiceNo, prev.packingList)
+    }))
   }
   return (
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--sidebar-width": "14rem",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }
@@ -205,8 +279,18 @@ export default function Page() {
                             <TableCell>{item.vendor}</TableCell>
                             <TableCell className="text-right">IDR {item.amount}</TableCell>
                             <TableCell>
-                              <Badge variant={item.exceptionDetails ? "outline" : "secondary"}>
-                                {item.exceptionDetails || "No Issues"}
+                              <Badge 
+                                variant={item.exceptionDetails === "Match" ? "default" : "outline"}
+                                className={`flex items-center gap-1 ${
+                                  item.exceptionDetails === "Match" ? "bg-green-100 text-green-800 border-green-300" :
+                                  item.exceptionDetails === "Partial Match" ? "bg-yellow-100 text-yellow-800 border-yellow-300" :
+                                  item.exceptionDetails === "Mismatch" ? "bg-red-100 text-red-800 border-red-300" : ""
+                                }`}
+                              >
+                                {item.exceptionDetails === "Match" && <IconCheck className="h-3 w-3" />}
+                                {item.exceptionDetails === "Partial Match" && <IconExclamationMark className="h-3 w-3" />}
+                                {item.exceptionDetails === "Mismatch" && <IconX className="h-3 w-3" />}
+                                {item.exceptionDetails || "Mismatch"}
                               </Badge>
                             </TableCell>
                             <TableCell>{item.agentsAction}</TableCell>
@@ -236,10 +320,8 @@ export default function Page() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button variant="outline" size="sm">
-                                  View Items Match
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => handleAIAction(item.documentSet)}>
+                                <ItemsMatchDialog documentSet={item.documentSet} />
+                                <Button variant="outline" size="sm" onClick={() => handleAIAction(item.documentSet, item.invoiceFilename, item.packingList)}>
                                   AI Actions
                                 </Button>
                               </div>
@@ -310,7 +392,29 @@ export default function Page() {
               <Label className="py-2">Email Body</Label>
               <Textarea value={actionData.body} readOnly rows={8} />
             </div>
-            <Button className="w-full">
+            <Button className="w-full" onClick={async () => {
+              try {
+                const response = await fetch('/api/send-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    subject: actionData.subject,
+                    body: actionData.body,
+                    documentSet: selectedDocument,
+                    invoiceFilename: actionData.invoiceFilename,
+                    packingList: actionData.packingList
+                  })
+                })
+                if (response.ok) {
+                  setSidebarOpen(false)
+                  alert('Email sent successfully!')
+                } else {
+                  alert('Failed to send email')
+                }
+              } catch (error) {
+                alert('Error sending email')
+              }
+            }}>
               Send Email
             </Button>
             </div>
