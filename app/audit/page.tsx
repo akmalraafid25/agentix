@@ -20,7 +20,7 @@ interface AuditRecord {
   actionTitle: string
   actionDescription: string
   actionContent: string
-  pendingReviews: number
+  poNumber: string
   status: string
   compliance: string
 }
@@ -167,7 +167,7 @@ export default function AuditPage() {
                                 <TableHead>Action</TableHead>
                                 <TableHead>Action Title</TableHead>
                                 <TableHead>Description</TableHead>
-                                <TableHead>Pending Reviews</TableHead>
+                                <TableHead>PO Number</TableHead>
                                 <TableHead>Status</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -198,7 +198,7 @@ export default function AuditPage() {
                                     <TableCell className="max-w-xs truncate" title={record.actionDescription}>
                                       {record.actionDescription}
                                     </TableCell>
-                                    <TableCell className="text-center">{record.pendingReviews}</TableCell>
+                                    <TableCell className="text-center">{record.poNumber}</TableCell>
                                     <TableCell>
                                       <Badge variant="outline" className="text-green-600 border-green-200">
                                         {record.status}
