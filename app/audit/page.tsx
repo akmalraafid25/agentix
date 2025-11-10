@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { AnalyticsSidebar } from "@/components/analytics-sidebar"
@@ -12,65 +12,41 @@ import { Badge } from "@/components/ui/badge"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { IconRobotFace, IconFileText, IconShield, IconUsers, IconClock, IconDownload } from "@tabler/icons-react"
 
-const auditData = [
-  {
-    timestamp: "14 Oct 2025 14:18:38",
-    user: "SWO Demo",
-    action: "UPDATE",
-    collection: "pending_reviews",
-    documentId: "",
-    status: "Success",
-    compliance: "Compliant"
-  },
-  {
-    timestamp: "14 Oct 2025 14:18:35",
-    user: "SWO Demo", 
-    action: "CREATE",
-    collection: "agent_action_history",
-    documentId: "",
-    status: "Success",
-    compliance: "Compliant"
-  },
-  {
-    timestamp: "14 Oct 2025 14:18:28",
-    user: "SWO Demo",
-    action: "UPDATE", 
-    collection: "pending_reviews",
-    documentId: "",
-    status: "Success",
-    compliance: "Compliant"
-  },
-  {
-    timestamp: "14 Oct 2025 14:18:25",
-    user: "SWO Demo",
-    action: "CREATE",
-    collection: "agent_action_history", 
-    documentId: "",
-    status: "Success",
-    compliance: "Compliant"
-  },
-  {
-    timestamp: "14 Oct 2025 14:18:15",
-    user: "SWO Demo",
-    action: "UPDATE",
-    collection: "pending_reviews",
-    documentId: "",
-    status: "Success", 
-    compliance: "Compliant"
-  },
-  {
-    timestamp: "14 Oct 2025 14:18:12",
-    user: "SWO Demo",
-    action: "CREATE",
-    collection: "agent_action_history",
-    documentId: "",
-    status: "Success",
-    compliance: "Compliant"
-  }
-]
+interface AuditRecord {
+  id: number
+  timestamp: string
+  user: string
+  action: string
+  actionTitle: string
+  actionDescription: string
+  actionContent: string
+  pendingReviews: number
+  status: string
+  compliance: string
+}
 
 export default function AuditPage() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
+  const [auditData, setAuditData] = useState<AuditRecord[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAuditData = async () => {
+      try {
+        const response = await fetch('/api/audit-trail')
+        const data = await response.json()
+        setAuditData(data)
+      } catch (error) {
+        console.error('Failed to fetch audit data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAuditData()
+    const interval = setInterval(fetchAuditData, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <SidebarProvider
@@ -189,36 +165,48 @@ export default function AuditPage() {
                                 <TableHead>Timestamp</TableHead>
                                 <TableHead>User</TableHead>
                                 <TableHead>Action</TableHead>
-                                <TableHead>Collection</TableHead>
-                                <TableHead>Document ID</TableHead>
+                                <TableHead>Action Title</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Pending Reviews</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Compliance</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {auditData.map((record, index) => (
-                                <TableRow key={index}>
-                                  <TableCell className="font-mono text-sm">{record.timestamp}</TableCell>
-                                  <TableCell>{record.user}</TableCell>
-                                  <TableCell>
-                                    <Badge variant={record.action === "CREATE" ? "default" : "secondary"}>
-                                      {record.action}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="font-mono text-sm">{record.collection}</TableCell>
-                                  <TableCell className="font-mono text-sm">{record.documentId}</TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline" className="text-green-600 border-green-200">
-                                      {record.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline" className="text-green-600 border-green-200">
-                                      {record.compliance}
-                                    </Badge>
+                              {loading ? (
+                                <TableRow>
+                                  <TableCell colSpan={7} className="text-center py-4">
+                                    Loading audit data...
                                   </TableCell>
                                 </TableRow>
-                              ))}
+                              ) : auditData.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={7} className="text-center py-4">
+                                    No audit records found
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                auditData.map((record) => (
+                                  <TableRow key={record.id}>
+                                    <TableCell className="font-mono text-sm">{record.timestamp}</TableCell>
+                                    <TableCell>{record.user}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={record.action.includes('CREATE') ? "default" : "secondary"}>
+                                        {record.action}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>{record.actionTitle}</TableCell>
+                                    <TableCell className="max-w-xs truncate" title={record.actionDescription}>
+                                      {record.actionDescription}
+                                    </TableCell>
+                                    <TableCell className="text-center">{record.pendingReviews}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className="text-green-600 border-green-200">
+                                        {record.status}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
                             </TableBody>
                           </Table>
                         </TabsContent>
@@ -290,70 +278,25 @@ export default function AuditPage() {
                           <div className="space-y-4">
                             <h3 className="text-lg font-medium">Recent Activity</h3>
                             <div className="space-y-4">
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:38</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">UPDATE - pending_reviews</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:35</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">CREATE - agent_action_history</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:28</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">UPDATE - pending_reviews</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:25</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">CREATE - agent_action_history</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:15</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">UPDATE - pending_reviews</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:12</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">CREATE - agent_action_history</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:04</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">UPDATE - pending_reviews</div>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                  <div className="font-mono text-sm text-muted-foreground">14 Oct 2025 14:18:01</div>
-                                  <div className="font-medium">SWO Demo</div>
-                                  <div className="text-sm text-muted-foreground">UPDATE - pending_reviews</div>
-                                </div>
-                              </div>
+                              {loading ? (
+                                <div className="text-center py-4">Loading activity...</div>
+                              ) : auditData.length === 0 ? (
+                                <div className="text-center py-4">No recent activity</div>
+                              ) : (
+                                auditData.slice(0, 10).map((record) => (
+                                  <div key={record.id} className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                    <div className="flex-1">
+                                      <div className="font-mono text-sm text-muted-foreground">{record.timestamp}</div>
+                                      <div className="font-medium">{record.user}</div>
+                                      <div className="text-sm text-muted-foreground">{record.action} - {record.actionTitle}</div>
+                                      {record.actionDescription && (
+                                        <div className="text-xs text-muted-foreground mt-1">{record.actionDescription}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
                         </TabsContent>

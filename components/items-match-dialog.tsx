@@ -30,12 +30,39 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
         const allItems = await response.json()
         
         const itemsWithMatch = allItems.map((item: any) => {
-          const hasInvoice = invoices.some((inv: any) => inv.purchase_order_no === item.poNumber)
-          const hasPacking = packing.some((pack: any) => pack.purchase_order_no === item.poNumber)
+          const invoiceItem = invoices.find((inv: any) => 
+            inv.item_no?.includes(item.itemCode) && inv.purchase_order_no === item.poNumber
+          )
+          const packingItem = packing.find((pack: any) => 
+            pack.item_no?.includes(item.itemCode) && pack.purchase_order_no === item.poNumber
+          )
+          
+          let matchStatus = 'match'
+          let mismatchReason = ''
+          
+          if (!invoiceItem && !packingItem) {
+            matchStatus = 'not_found'
+            mismatchReason = 'Item not found in both invoice and packing list'
+          } else if (!invoiceItem) {
+            matchStatus = 'packing_only'
+            mismatchReason = 'Item only exists in packing list'
+          } else if (!packingItem) {
+            matchStatus = 'invoice_only'
+            mismatchReason = 'Item only exists in invoice'
+          } else {
+            const invoiceQty = invoiceItem.quantity?.[invoiceItem.item_no?.indexOf(item.itemCode)] || 0
+            const packingQty = packingItem.quantity?.[packingItem.item_no?.indexOf(item.itemCode)] || 0
+            if (invoiceQty !== packingQty) {
+              matchStatus = 'qty_mismatch'
+              mismatchReason = `Quantity mismatch: Invoice ${invoiceQty} ≠ Packing ${packingQty}`
+            }
+          }
+          
           return {
             ...item,
-            matchPL: hasInvoice && hasPacking,
-            matchERP: true
+            matchPL: matchStatus === 'match',
+            matchStatus,
+            mismatchReason
           }
         })
         
@@ -57,7 +84,7 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
           View Items Match
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Items Match Details - {documentSet}</DialogTitle>
         </DialogHeader>
@@ -70,7 +97,6 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
                 <TableHead>Quantity</TableHead>
                 <TableHead>Unit Price</TableHead>
                 <TableHead>Line Amount</TableHead>
-                <TableHead>Match ERP</TableHead>
                 <TableHead>Match PL</TableHead>
                 <TableHead>Skip</TableHead>
               </TableRow>
@@ -83,19 +109,6 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
                   <TableCell>{item.quantity}</TableCell>
                   <TableCell>{item.unitPrice}</TableCell>
                   <TableCell>{item.lineAmount}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-center">
-                      {item.matchERP ? (
-                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                          <IconCheck className="w-4 h-4 text-green-600" />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                          <IconX className="w-4 h-4 text-red-600" />
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
                   <TableCell>
                     <div className="flex justify-center">
                       {item.matchPL ? (
@@ -119,11 +132,34 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
             </TableBody>
           </Table>
         </div>
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 max-h-60 overflow-y-auto">
           <div className="flex items-start gap-2">
-            <IconAlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-gray-700 leading-relaxed">
-              All items match between invoice and packing list: - **MZ-RM-R200-01**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-02**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-03**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-04**: Invoice qty 326 = Packing list qty 326 ✓ - **MZ-RM-R200-05**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-06**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-07**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-08**: Invoice qty 163 = Packing list qty 163 ✓ - **MZ-RM-R200-09**: Invoice qty 163 = Packing list qty 163 ✓ All 9 items have matching quantities between invoice and packing list.
+            <IconCheck className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h4 className="font-medium text-green-800 mb-2">Items match between invoice and packing list:</h4>
+              <div className="space-y-2 text-sm">
+                {itemsData.map((item: any, index) => (
+                  <div key={index} className={`flex items-start gap-2 p-2 rounded ${item.matchPL ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-mono font-medium">{item.itemCode}:</span>
+                      <span>Qty {item.quantity}</span>
+                      {item.matchPL ? (
+                        <IconCheck className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <IconX className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      )}
+                    </div>
+                    {!item.matchPL && item.mismatchReason && (
+                      <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded flex-shrink-0">
+                        {item.mismatchReason}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-green-700 mt-3 font-medium">
+                {itemsData.filter((item: any) => item.matchPL).length} of {itemsData.length} items match between invoice and packing list.
+              </p>
             </div>
           </div>
         </div>
