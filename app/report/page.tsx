@@ -99,19 +99,54 @@ export default function Page() {
           poGroups[po].packing = pack
         })
         
-        const combinedData = Object.entries(poGroups).map(([po, group]: [string, any], index: number) => ({
-          documentSet: `DOC-${po}`,
-          invoiceNo: group.invoice?.invoice_no || '',
-          invoiceFilename: group.invoice?.source || '',
-          packingList: group.packing?.source || '',
-          billOfLading: '',
-          vendor: group.invoice?.vendor_name || group.packing?.vendor_name || '',
-          amount: group.invoice?.total_amount || '0',
-          exceptionDetails: index === 0 ? 'Match' : index === 1 ? 'Partial Match' : (group.invoice?.match_status || group.packing?.match_status || 'Mismatch'),
-          agentsAction: 'Pending verification',
-          erpMatch: 'No Issues',
-          reviewStatus: 'Pending'
-        }))
+        const combinedData = Object.entries(poGroups).map(([po, group]: [string, any]) => {
+          const hasInvoice = !!group.invoice
+          const hasPacking = !!group.packing
+          
+          let exceptionDetails = 'Match'
+          
+          if (!hasInvoice && !hasPacking) {
+            exceptionDetails = 'No Documents'
+          } else if (!hasInvoice) {
+            exceptionDetails = 'Missing Invoice'
+          } else if (!hasPacking) {
+            exceptionDetails = 'Missing Packing List'
+          } else {
+            // Check if items match between invoice and packing
+            const invoiceItems = group.invoice.item_no || []
+            const packingItems = group.packing.item_no || []
+            
+            if (invoiceItems.length === 0 || packingItems.length === 0) {
+              exceptionDetails = 'Missing Items Data'
+            } else {
+              const matchingItems = invoiceItems.filter((item: string) => 
+                packingItems.includes(item)
+              )
+              
+              if (matchingItems.length === invoiceItems.length && matchingItems.length === packingItems.length) {
+                exceptionDetails = 'Match'
+              } else if (matchingItems.length > 0) {
+                exceptionDetails = 'Partial Match'
+              } else {
+                exceptionDetails = 'Item Mismatch'
+              }
+            }
+          }
+          
+          return {
+            documentSet: `DOC-${po}`,
+            invoiceNo: group.invoice?.invoice_no || '',
+            invoiceFilename: group.invoice?.source || '',
+            packingList: group.packing?.source || '',
+            billOfLading: '',
+            vendor: group.invoice?.vendor_name || group.packing?.vendor_name || '',
+            amount: group.invoice?.total_amount || '0',
+            exceptionDetails,
+            agentsAction: 'Pending verification',
+            erpMatch: 'No Issues',
+            reviewStatus: 'Pending'
+          }
+        })
         
         setPendingReviewData(combinedData)
       } catch (error) {

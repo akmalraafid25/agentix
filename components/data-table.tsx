@@ -412,6 +412,7 @@ export function DataTable({
   loading?: boolean
   onTabChange?: (tab: string) => void
 }) {
+  const [activeTab, setActiveTab] = React.useState("outline")
   const [packingTableData, setPackingTableData] = React.useState(() => packingData)
 
   React.useEffect(() => {
@@ -543,7 +544,10 @@ export function DataTable({
     <Tabs
       defaultValue="outline"
       className="w-full flex-col justify-start gap-6"
-      onValueChange={onTabChange}
+      onValueChange={(value) => {
+        setActiveTab(value)
+        onTabChange?.(value)
+      }}
     >
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
@@ -589,7 +593,7 @@ export function DataTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {table
+              {(activeTab === "past-performance" ? packingTable : table)
                 .getAllColumns()
                 .filter(
                   (column) =>
