@@ -20,6 +20,7 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  console.log('Current pathname:', pathname)
 
   return (
     <SidebarGroup>
@@ -27,12 +28,17 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <a href={item.url}>
-                <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url} className="hover:bg-gray-200 dark:hover:bg-gray-700 data-[active=true]:bg-gray-200 dark:data-[active=true]:bg-gray-700">
-                {item.icon && <item.icon />}
+              <SidebarMenuButton 
+                asChild 
+                tooltip={item.title} 
+                isActive={pathname.replace(/\/$/, '') === item.url.replace(/\/$/, '') || (item.url === '/dashboard' && pathname === '/')} 
+                className="hover:bg-primary/10 hover:text-primary data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+              >
+                <a href={item.url}>
+                  {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                </SidebarMenuButton>
-              </a>
+                </a>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
