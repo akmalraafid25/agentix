@@ -36,6 +36,7 @@ interface ChartDataPoint {
   date: string
   invoices: number
   packing: number
+  billOfLandings: number
 }
 
 const chartConfig = {
@@ -48,6 +49,10 @@ const chartConfig = {
   },
   packing: {
     label: "Packing Lists",
+    color: "var(--primary)",
+  },
+  billOfLandings: {
+    label: "Bill of Landings",
     color: "var(--primary)",
   },
 } satisfies ChartConfig
@@ -168,6 +173,18 @@ export function ChartAreaInteractive() {
                   stopOpacity={0.1}
                 />
               </linearGradient>
+              <linearGradient id="fillBillOfLandings" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-billOfLandings)"
+                  stopOpacity={0.6}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-billOfLandings)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -197,6 +214,13 @@ export function ChartAreaInteractive() {
                   indicator="dot"
                 />
               }
+            />
+            <Area
+              dataKey="billOfLandings"
+              type="natural"
+              fill="url(#fillBillOfLandings)"
+              stroke="var(--color-billOfLandings)"
+              stackId="a"
             />
             <Area
               dataKey="packing"

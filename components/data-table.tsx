@@ -174,6 +174,32 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "invoice_no",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-8 px-2"
+      >
+        Invoice No.
+        {column.getIsSorted() === "asc" ? (
+          <IconChevronUp className="ml-2 h-4 w-4" />
+        ) : column.getIsSorted() === "desc" ? (
+          <IconChevronDown className="ml-2 h-4 w-4" />
+        ) : (
+          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        )}
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div>
+        <Badge variant="outline" className="text-muted-foreground px-1.5">
+          {row.original.invoice_no}
+        </Badge>
+      </div>
+    ),
+  },
+  {
     accessorKey: "source",
     header: ({ column }) => (
       <Button
@@ -203,32 +229,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "invoice_no",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 px-2"
-      >
-        Invoice No.
-        {column.getIsSorted() === "asc" ? (
-          <IconChevronUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-          <IconChevronDown className="ml-2 h-4 w-4" />
-        ) : (
-          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        )}
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <div>
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.invoice_no}
-        </Badge>
-      </div>
-    ),
-  },
-  {
     accessorKey: "vendor_name",
     header: ({ column }) => (
       <Button
@@ -236,7 +236,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="h-8 px-2"
       >
-        Vendor Name
+        Buyer Name
         {column.getIsSorted() === "asc" ? (
           <IconChevronUp className="ml-2 h-4 w-4" />
         ) : column.getIsSorted() === "desc" ? (
@@ -278,7 +278,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "quantity",
-    header: "Quantity",
+    header: "Total Cartons",
     cell: ({ row }) => (
       <div className="text-right">
         {Array.isArray(row.original.quantity) ? (
@@ -292,35 +292,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
   },
   {
-    accessorKey: "price",
-    header: "Price",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {Array.isArray(row.original.price) ? (
-          row.original.price.map((price, index) => (
-            <div key={index}>${price}</div>
-          ))
-        ) : (
-          `$${row.original.price}`
-        )}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "currency",
-    header: "Currency",
-    cell: ({ row }) => (
-      <div>
-        {row.original.currency}
-      </div>
-    ),
-  },
-  {
     accessorKey: "total_amount",
-    header: "Total Amount",
+    header: "Gross Weight",
     cell: ({ row }) => (
       <div className="text-right">
-        ${row.original.total_amount}
+        {row.original.total_amount} kg
       </div>
     ),
   },
@@ -404,22 +380,31 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 export function DataTable({
   data: initialData,
   packingData = [],
+  billOfLandingData = [],
   loading = false,
   onTabChange,
 }: {
   data: z.infer<typeof schema>[]
   packingData?: z.infer<typeof schema>[]
+  billOfLandingData?: z.infer<typeof schema>[]
   loading?: boolean
   onTabChange?: (tab: string) => void
 }) {
   const [activeTab, setActiveTab] = React.useState("outline")
   const [packingTableData, setPackingTableData] = React.useState(() => packingData)
+  const [billOfLandingTableData, setBillOfLandingTableData] = React.useState(() => billOfLandingData)
 
   React.useEffect(() => {
     if (JSON.stringify(packingTableData) !== JSON.stringify(packingData)) {
       setPackingTableData(packingData)
     }
   }, [packingData, packingTableData])
+
+  React.useEffect(() => {
+    if (JSON.stringify(billOfLandingTableData) !== JSON.stringify(billOfLandingData)) {
+      setBillOfLandingTableData(billOfLandingData)
+    }
+  }, [billOfLandingData, billOfLandingTableData])
   const [data, setData] = React.useState(() => initialData)
 
   React.useEffect(() => {
@@ -564,7 +549,7 @@ export function DataTable({
           <SelectContent>
             <SelectItem value="outline">Invoice ({data.length})</SelectItem>
             <SelectItem value="past-performance">Packing List ({packingTableData.length})</SelectItem>
-            <SelectItem value="key-personnel">Bill of Lading (0)</SelectItem>
+            <SelectItem value="key-personnel">Bill of Lading ({billOfLandingTableData.length})</SelectItem>
             <SelectItem value="focus-documents">Progress (0)</SelectItem>
           </SelectContent>
         </Select>
@@ -576,7 +561,7 @@ export function DataTable({
             Packing List <Badge variant="secondary">{packingTableData.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
-            Bill of Lading <Badge variant="secondary">0</Badge>
+            Bill of Lading <Badge variant="secondary">{billOfLandingTableData.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="focus-documents">
             Progress <Badge variant="secondary">0</Badge>
@@ -920,7 +905,16 @@ export function DataTable({
           <DndContext
             collisionDetection={closestCenter}
             modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(event) => {
+              const { active, over } = event
+              if (active && over && active.id !== over.id) {
+                setBillOfLandingTableData((data) => {
+                  const oldIndex = data.findIndex(item => item.id === active.id)
+                  const newIndex = data.findIndex(item => item.id === over.id)
+                  return arrayMove(data, oldIndex, newIndex)
+                })
+              }
+            }}
             sensors={sensors}
             id={sortableId + "-bol"}
           >
@@ -956,6 +950,84 @@ export function DataTable({
                       </div>
                     </TableCell>
                   </TableRow>
+                ) : billOfLandingTableData?.length ? (
+                  <SortableContext
+                    items={billOfLandingTableData.map(item => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {billOfLandingTableData.map((item) => (
+                      <TableRow key={item.id}>
+                        {columns.map((column) => (
+                          <TableCell key={column.id || column.accessorKey}>
+                            {column.id === 'drag' ? (
+                              <DragHandle id={item.id} />
+                            ) : column.id === 'select' ? (
+                              <Checkbox />
+                            ) : column.accessorKey === 'source' ? (
+                              <TableCellViewer item={item} onUpdate={() => {}} />
+                            ) : column.accessorKey === 'invoice_no' ? (
+                              <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                {typeof item.invoice_no === 'object' ? JSON.stringify(item.invoice_no) : item.invoice_no}
+                              </Badge>
+                            ) : column.accessorKey === 'vendor_name' ? (
+                              typeof item.vendor_name === 'object' ? JSON.stringify(item.vendor_name) : item.vendor_name
+                            ) : column.accessorKey === 'purchase_order_no' ? (
+                              typeof item.purchase_order_no === 'object' ? JSON.stringify(item.purchase_order_no) : item.purchase_order_no
+                            ) : column.accessorKey === 'item_no' ? (
+                              <div className="whitespace-nowrap">
+                                {Array.isArray(item.item_no) ? (
+                                  item.item_no.map((itemNo: any, index: number) => {
+                                    const cleanItem = typeof itemNo === 'string' ? itemNo.replace(/["\[\]]/g, '') : itemNo
+                                    return <div key={index}>{cleanItem}</div>
+                                  })
+                                ) : (
+                                  <div>{typeof item.item_no === 'string' ? item.item_no.replace(/["\[\]]/g, '') : item.item_no}</div>
+                                )}
+                              </div>
+                            ) : column.accessorKey === 'quantity' ? (
+                              <div className="text-right">
+                                {Array.isArray(item.quantity) ? (
+                                  item.quantity.map((qty, index) => (
+                                    <div key={index}>{qty}</div>
+                                  ))
+                                ) : (
+                                  item.quantity
+                                )}
+                              </div>
+                            ) : column.accessorKey === 'price' ? (
+                              <div className="text-right">
+                                {Array.isArray(item.price) ? (
+                                  item.price.map((price, index) => (
+                                    <div key={index}>${price}</div>
+                                  ))
+                                ) : (
+                                  `$${item.price}`
+                                )}
+                              </div>
+                            ) : column.accessorKey === 'currency' ? (
+                              typeof item.currency === 'object' ? JSON.stringify(item.currency) : item.currency
+                            ) : column.accessorKey === 'total_amount' ? (
+                              <div className="text-right">{typeof item.total_amount === 'object' ? JSON.stringify(item.total_amount) : item.total_amount} kg</div>
+                            ) : column.accessorKey === 'created_at' ? (
+                              typeof item.created_at === 'string' ? new Date(item.created_at).toLocaleString() : String(item.created_at)
+                            ) : column.id === 'actions' ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
+                                    <IconDotsVertical />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-32">
+                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  <DropdownMenuItem>Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : null}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </SortableContext>
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center">
