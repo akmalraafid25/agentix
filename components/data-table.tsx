@@ -958,7 +958,7 @@ export function DataTable({
                     {billOfLandingTableData.map((item) => (
                       <TableRow key={item.id}>
                         {columns.map((column) => (
-                          <TableCell key={column.id || column.accessorKey}>
+                          <TableCell key={column.id}>
                             {column.id === 'drag' ? (
                               <DragHandle id={item.id} />
                             ) : column.id === 'select' ? (
