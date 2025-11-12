@@ -479,7 +479,7 @@ export function DataTable({
   })
 
   const packingColumns = columns.filter((col: any) => 
-    !['invoice_no', 'price', 'currency', 'total_amount'].includes(col.accessorKey as string)
+    !['invoice_no', 'price', 'currency', 'total_amount'].includes(col.id as string)
   )
 
   const packingTable = useReactTable({
@@ -963,17 +963,17 @@ export function DataTable({
                               <DragHandle id={item.id} />
                             ) : column.id === 'select' ? (
                               <Checkbox />
-                            ) : column.accessorKey === 'source' ? (
+                            ) : column.id === 'source' ? (
                               <TableCellViewer item={item} onUpdate={() => {}} />
-                            ) : column.accessorKey === 'invoice_no' ? (
+                            ) : column.id === 'invoice_no' ? (
                               <Badge variant="outline" className="text-muted-foreground px-1.5">
                                 {typeof item.invoice_no === 'object' ? JSON.stringify(item.invoice_no) : item.invoice_no}
                               </Badge>
-                            ) : column.accessorKey === 'vendor_name' ? (
+                            ) : column.id === 'vendor_name' ? (
                               typeof item.vendor_name === 'object' ? JSON.stringify(item.vendor_name) : item.vendor_name
-                            ) : column.accessorKey === 'purchase_order_no' ? (
+                            ) : column.id === 'purchase_order_no' ? (
                               typeof item.purchase_order_no === 'object' ? JSON.stringify(item.purchase_order_no) : item.purchase_order_no
-                            ) : column.accessorKey === 'item_no' ? (
+                            ) : column.id === 'item_no' ? (
                               <div className="whitespace-nowrap">
                                 {Array.isArray(item.item_no) ? (
                                   item.item_no.map((itemNo: any, index: number) => {
@@ -981,10 +981,10 @@ export function DataTable({
                                     return <div key={index}>{cleanItem}</div>
                                   })
                                 ) : (
-                                  <div>{typeof item.item_no === 'string' ? item.item_no.replace(/["\[\]]/g, '') : item.item_no}</div>
+                                  <div>{String(item.item_no).replace(/["\[\]]/g, '')}</div>
                                 )}
                               </div>
-                            ) : column.accessorKey === 'quantity' ? (
+                            ) : column.id === 'quantity' ? (
                               <div className="text-right">
                                 {Array.isArray(item.quantity) ? (
                                   item.quantity.map((qty, index) => (
@@ -994,7 +994,7 @@ export function DataTable({
                                   item.quantity
                                 )}
                               </div>
-                            ) : column.accessorKey === 'price' ? (
+                            ) : column.id === 'price' ? (
                               <div className="text-right">
                                 {Array.isArray(item.price) ? (
                                   item.price.map((price, index) => (
@@ -1004,11 +1004,11 @@ export function DataTable({
                                   `$${item.price}`
                                 )}
                               </div>
-                            ) : column.accessorKey === 'currency' ? (
+                            ) : column.id === 'currency' ? (
                               typeof item.currency === 'object' ? JSON.stringify(item.currency) : item.currency
-                            ) : column.accessorKey === 'total_amount' ? (
+                            ) : column.id === 'total_amount' ? (
                               <div className="text-right">{typeof item.total_amount === 'object' ? JSON.stringify(item.total_amount) : item.total_amount} kg</div>
-                            ) : column.accessorKey === 'created_at' ? (
+                            ) : column.id === 'created_at' ? (
                               typeof item.created_at === 'string' ? new Date(item.created_at).toLocaleString() : String(item.created_at)
                             ) : column.id === 'actions' ? (
                               <DropdownMenu>
