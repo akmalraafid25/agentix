@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             }]
           }
         ],
-        semantic_view: 'AGENTIX.PUBLIC.AGENTIX_CORTEX'
+        semantic_view: 'AGENTIX.PUBLIC.AGENTIX'
       })
     })
     
