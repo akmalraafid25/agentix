@@ -278,7 +278,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "quantity",
-    header: "Total Cartons",
+    header: "Quantity",
     cell: ({ row }) => (
       <div className="text-right">
         {Array.isArray(row.original.quantity) ? (
@@ -291,15 +291,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "total_amount",
-    header: "Gross Weight",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.total_amount} kg
-      </div>
-    ),
-  },
+
   {
     accessorKey: "created_at",
     header: ({ column }) => (
@@ -446,9 +438,69 @@ export function DataTable({
     [packingTableData]
   )
 
+  const invoiceColumns = [...columns.slice(0, -2), 
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }: any) => (
+        <div className="text-right">
+          {Array.isArray(row.original.price) ? (
+            row.original.price.map((price: any, index: number) => (
+              <div key={index}>${price}</div>
+            ))
+          ) : (
+            `$${row.original.price}`
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "currency",
+      header: "Currency",
+      cell: ({ row }: any) => (
+        <div>
+          {row.original.currency}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "total_amount",
+      header: "Total Amount",
+      cell: ({ row }: any) => (
+        <div className="text-right">
+          ${row.original.total_amount}
+        </div>
+      ),
+    },
+    ...columns.slice(-2)
+  ].map(col => {
+    if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
+      return {
+        ...col,
+        header: ({ column }: any) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Invoice No.
+            {column.getIsSorted() === "asc" ? (
+              <IconChevronUp className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "desc" ? (
+              <IconChevronDown className="ml-2 h-4 w-4" />
+            ) : (
+              <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+            )}
+          </Button>
+        )
+      }
+    }
+    return col
+  })
+
   const table = useReactTable({
     data,
-    columns,
+    columns: invoiceColumns,
     state: {
       sorting,
       columnVisibility,
@@ -478,9 +530,45 @@ export function DataTable({
     }
   })
 
-  const packingColumns = columns.filter((col: any) => 
-    !['invoice_no', 'price', 'currency', 'total_amount'].includes(col.id as string)
-  )
+  const packingColumns = [...columns.slice(0, -2).map(col => {
+    if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
+      return {
+        ...col,
+        header: ({ column }: any) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Packing List No.
+            {column.getIsSorted() === "asc" ? (
+              <IconChevronUp className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "desc" ? (
+              <IconChevronDown className="ml-2 h-4 w-4" />
+            ) : (
+              <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+            )}
+          </Button>
+        )
+      }
+    }
+    if ('accessorKey' in col && col.accessorKey === 'quantity') {
+      return {
+        ...col,
+        header: 'Total Cartons'
+      }
+    }
+    return col
+  }), {
+    id: "total_gross_weight",
+    accessorKey: "total_amount",
+    header: "Total Gross Weight",
+    cell: ({ row }: any) => (
+      <div className="text-right">
+        {row.original.total_amount} kg
+      </div>
+    ),
+  }, ...columns.slice(-2)]
 
   const packingTable = useReactTable({
     data: packingTableData,

@@ -54,7 +54,7 @@ const data = {
       title: "Audit Trails",
       url: "/audit",
       icon: IconChartBar,
-    }
+    } 
   ],
   navSecondary: [
     {
