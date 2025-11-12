@@ -30,12 +30,16 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
         const allItems = await response.json()
         
         const itemsWithMatch = allItems.map((item: any) => {
-          const invoiceItem = invoices.find((inv: any) => 
-            inv.item_no?.includes(item.itemCode) && inv.purchase_order_no === item.poNumber
-          )
-          const packingItem = packing.find((pack: any) => 
-            pack.item_no?.includes(item.itemCode) && pack.purchase_order_no === item.poNumber
-          )
+          const invoiceItem = invoices.find((inv: any) => {
+            const itemCodes = Array.isArray(inv.item_no) ? inv.item_no : [inv.item_no]
+            return itemCodes.some((code: string) => code === item.itemCode) && 
+                   inv.purchase_order_no === item.poNumber
+          })
+          const packingItem = packing.find((pack: any) => {
+            const itemCodes = Array.isArray(pack.item_no) ? pack.item_no : [pack.item_no]
+            return itemCodes.some((code: string) => code === item.itemCode) && 
+                   pack.purchase_order_no === item.poNumber
+          })
           
           let matchStatus = 'match'
           let mismatchReason = ''
@@ -50,9 +54,17 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
             matchStatus = 'invoice_only'
             mismatchReason = 'Item only exists in invoice'
           } else {
-            const invoiceQty = invoiceItem.quantity?.[invoiceItem.item_no?.indexOf(item.itemCode)] || 0
-            const packingQty = packingItem.quantity?.[packingItem.item_no?.indexOf(item.itemCode)] || 0
-            if (invoiceQty !== packingQty) {
+            const getQuantityForItem = (doc: any, itemCode: string) => {
+              const itemCodes = Array.isArray(doc.item_no) ? doc.item_no : [doc.item_no]
+              const quantities = Array.isArray(doc.quantity) ? doc.quantity : [doc.quantity]
+              const itemIndex = itemCodes.findIndex((code: string) => code === itemCode)
+              return itemIndex >= 0 ? quantities[itemIndex] : 0
+            }
+            
+            const invoiceQty = getQuantityForItem(invoiceItem, item.itemCode)
+            const packingQty = getQuantityForItem(packingItem, item.itemCode)
+            
+            if (Number(invoiceQty) !== Number(packingQty)) {
               matchStatus = 'qty_mismatch'
               mismatchReason = `Quantity mismatch: Invoice ${invoiceQty} ≠ Packing ${packingQty}`
             }

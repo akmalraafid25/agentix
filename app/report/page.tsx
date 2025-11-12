@@ -162,9 +162,8 @@ export default function Page() {
           }
         })
         
-        // Filter out items that are already matched
-        const filteredData = combinedData.filter(item => item.exceptionDetails !== 'Match')
-        setPendingReviewData(filteredData)
+        // Show all documents, not just exceptions
+        setPendingReviewData(combinedData)
       } catch (error) {
         console.error('Error fetching data:', error)
         setPendingReviewData(initialData)
