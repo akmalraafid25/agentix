@@ -121,12 +121,8 @@ export const schema = z.object({
   total_amount: z.string(),
 })
 
-// Create a separate component for the drag handle
 function DragHandle({ id }: { id: number }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  })
-
+  const { attributes, listeners } = useSortable({ id })
   return (
     <Button
       {...attributes}
@@ -141,7 +137,24 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
+const createSortableHeader = (title: string) => ({ column }: any) => (
+  <Button
+    variant="ghost"
+    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    className="h-8 px-2"
+  >
+    {title}
+    {column.getIsSorted() === "asc" ? (
+      <IconChevronUp className="ml-2 h-4 w-4" />
+    ) : column.getIsSorted() === "desc" ? (
+      <IconChevronDown className="ml-2 h-4 w-4" />
+    ) : (
+      <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+    )}
+  </Button>
+)
+
+const baseColumns: ColumnDef<z.infer<typeof schema>>[] = [
   {
     id: "drag",
     header: () => null,
@@ -152,10 +165,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: ({ table }) => (
       <div className="flex items-center justify-center">
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -175,48 +185,16 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "invoice_no",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 px-2"
-      >
-        Invoice No.
-        {column.getIsSorted() === "asc" ? (
-          <IconChevronUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-          <IconChevronDown className="ml-2 h-4 w-4" />
-        ) : (
-          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        )}
-      </Button>
-    ),
+    header: createSortableHeader("Invoice No."),
     cell: ({ row }) => (
-      <div>
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.invoice_no}
-        </Badge>
-      </div>
+      <Badge variant="outline" className="text-muted-foreground px-1.5">
+        {row.original.invoice_no}
+      </Badge>
     ),
   },
   {
     accessorKey: "source",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 px-2"
-      >
-        Source
-        {column.getIsSorted() === "asc" ? (
-          <IconChevronUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-          <IconChevronDown className="ml-2 h-4 w-4" />
-        ) : (
-          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        )}
-      </Button>
-    ),
+    header: createSortableHeader("Source"),
     cell: ({ row, table }) => {
       const handleUpdate = (updatedItem: z.infer<typeof schema>) => {
         const meta = table.options.meta as { updateData?: (index: number, item: z.infer<typeof schema>) => void } | undefined
@@ -230,36 +208,13 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     accessorKey: "vendor_name",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 px-2"
-      >
-        Buyer Name
-        {column.getIsSorted() === "asc" ? (
-          <IconChevronUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-          <IconChevronDown className="ml-2 h-4 w-4" />
-        ) : (
-          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        )}
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <div>
-        {row.original.vendor_name}
-      </div>
-    ),
+    header: createSortableHeader("Buyer Name"),
+    cell: ({ row }) => <div>{row.original.vendor_name}</div>,
   },
   {
     accessorKey: "purchase_order_no",
     header: "Purchase Order No.",
-    cell: ({ row }) => (
-      <div>
-        {row.original.purchase_order_no}
-      </div>
-    ),
+    cell: ({ row }) => <div>{row.original.purchase_order_no}</div>,
   },
   {
     accessorKey: "item_no",
@@ -291,43 +246,17 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       </div>
     ),
   },
-
   {
     accessorKey: "created_at",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 px-2"
-      >
-        Created At
-        {column.getIsSorted() === "asc" ? (
-          <IconChevronUp className="ml-2 h-4 w-4" />
-        ) : column.getIsSorted() === "desc" ? (
-          <IconChevronDown className="ml-2 h-4 w-4" />
-        ) : (
-          <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        )}
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <div>
-        {new Date(row.original.created_at).toLocaleString()}
-      </div>
-    ),
+    header: createSortableHeader("Created At"),
+    cell: ({ row }) => <div>{new Date(row.original.created_at).toLocaleString()}</div>,
   },
-
-
   {
     id: "actions",
     cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
+          <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
@@ -383,27 +312,13 @@ export function DataTable({
   onTabChange?: (tab: string) => void
 }) {
   const [activeTab, setActiveTab] = React.useState("outline")
-  const [packingTableData, setPackingTableData] = React.useState(() => packingData)
-  const [billOfLandingTableData, setBillOfLandingTableData] = React.useState(() => billOfLandingData)
+  const [data, setData] = React.useState(initialData)
+  const [packingTableData, setPackingTableData] = React.useState(packingData)
+  const [billOfLandingTableData, setBillOfLandingTableData] = React.useState(billOfLandingData)
 
-  React.useEffect(() => {
-    if (JSON.stringify(packingTableData) !== JSON.stringify(packingData)) {
-      setPackingTableData(packingData)
-    }
-  }, [packingData, packingTableData])
-
-  React.useEffect(() => {
-    if (JSON.stringify(billOfLandingTableData) !== JSON.stringify(billOfLandingData)) {
-      setBillOfLandingTableData(billOfLandingData)
-    }
-  }, [billOfLandingData, billOfLandingTableData])
-  const [data, setData] = React.useState(() => initialData)
-
-  React.useEffect(() => {
-    if (JSON.stringify(data) !== JSON.stringify(initialData)) {
-      setData(initialData)
-    }
-  }, [initialData, data])
+  React.useEffect(() => { setData(initialData) }, [initialData])
+  React.useEffect(() => { setPackingTableData(packingData) }, [packingData])
+  React.useEffect(() => { setBillOfLandingTableData(billOfLandingData) }, [billOfLandingData])
 
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -438,7 +353,8 @@ export function DataTable({
     [packingTableData]
   )
 
-  const invoiceColumns = [...columns.slice(0, -2), 
+  const invoiceColumns = [
+    ...baseColumns.slice(0, -2),
     {
       accessorKey: "price",
       header: "Price",
@@ -457,46 +373,15 @@ export function DataTable({
     {
       accessorKey: "currency",
       header: "Currency",
-      cell: ({ row }: any) => (
-        <div>
-          {row.original.currency}
-        </div>
-      ),
+      cell: ({ row }: any) => <div>{row.original.currency}</div>,
     },
     {
       accessorKey: "total_amount",
       header: "Total Amount",
-      cell: ({ row }: any) => (
-        <div className="text-right">
-          ${row.original.total_amount}
-        </div>
-      ),
+      cell: ({ row }: any) => <div className="text-right">${row.original.total_amount}</div>,
     },
-    ...columns.slice(-2)
-  ].map(col => {
-    if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
-      return {
-        ...col,
-        header: ({ column }: any) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            Invoice No.
-            {column.getIsSorted() === "asc" ? (
-              <IconChevronUp className="ml-2 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <IconChevronDown className="ml-2 h-4 w-4" />
-            ) : (
-              <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-            )}
-          </Button>
-        )
-      }
-    }
-    return col
-  })
+    ...baseColumns.slice(-2)
+  ]
 
   const table = useReactTable({
     data,
@@ -530,45 +415,50 @@ export function DataTable({
     }
   })
 
-  const packingColumns = [...columns.slice(0, -2).map(col => {
-    if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
-      return {
-        ...col,
-        header: ({ column }: any) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            Packing List No.
-            {column.getIsSorted() === "asc" ? (
-              <IconChevronUp className="ml-2 h-4 w-4" />
-            ) : column.getIsSorted() === "desc" ? (
-              <IconChevronDown className="ml-2 h-4 w-4" />
-            ) : (
-              <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-            )}
-          </Button>
-        )
+  const packingColumns = [
+    ...baseColumns.slice(0, -2).map(col => {
+      if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
+        return { ...col, header: createSortableHeader("Packing List No.") }
       }
-    }
-    if ('accessorKey' in col && col.accessorKey === 'quantity') {
-      return {
-        ...col,
-        header: 'Total Cartons'
+      if ('accessorKey' in col && col.accessorKey === 'quantity') {
+        return { ...col, header: 'Total Cartons' }
       }
-    }
-    return col
-  }), {
-    id: "total_gross_weight",
-    accessorKey: "total_amount",
-    header: "Total Gross Weight",
-    cell: ({ row }: any) => (
-      <div className="text-right">
-        {row.original.total_amount} kg
-      </div>
-    ),
-  }, ...columns.slice(-2)]
+      return col
+    }),
+    {
+      accessorKey: "total_amount",
+      header: "Total Gross Weight",
+      cell: ({ row }: any) => <div className="text-right">{row.original.total_amount} kg</div>,
+    },
+    ...baseColumns.slice(-2)
+  ]
+
+  const billOfLandingColumns = [
+    ...baseColumns.slice(0, -2).map(col => {
+      if ('accessorKey' in col && col.accessorKey === 'invoice_no') {
+        return { ...col, header: createSortableHeader("Bill of Lading No.") }
+      }
+      if ('accessorKey' in col && col.accessorKey === 'vendor_name') {
+        return { ...col, header: createSortableHeader("Organization") }
+      }
+      if ('accessorKey' in col && col.accessorKey === 'purchase_order_no') {
+        return { ...col, header: "Vessel" }
+      }
+      if ('accessorKey' in col && col.accessorKey === 'item_no') {
+        return { ...col, header: "Package Code" }
+      }
+      if ('accessorKey' in col && col.accessorKey === 'quantity') {
+        return { ...col, header: 'Total Cartons' }
+      }
+      return col
+    }),
+    {
+      accessorKey: "total_amount",
+      header: "Gross Weight",
+      cell: ({ row }: any) => <div className="text-right">{row.original.total_amount} kg</div>,
+    },
+    ...baseColumns.slice(-2)
+  ]
 
   const packingTable = useReactTable({
     data: packingTableData,
@@ -596,6 +486,38 @@ export function DataTable({
     meta: {
       updateData: (rowIndex: number, updatedItem: z.infer<typeof schema>) => {
         setPackingTableData(prev => prev.map((item, index) => 
+          index === rowIndex ? updatedItem : item
+        ))
+      }
+    }
+  })
+
+  const billOfLandingTable = useReactTable({
+    data: billOfLandingTableData,
+    columns: billOfLandingColumns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      pagination: packingPagination,
+    },
+    getRowId: (row) => row.id.toString(),
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPackingPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    meta: {
+      updateData: (rowIndex: number, updatedItem: z.infer<typeof schema>) => {
+        setBillOfLandingTableData(prev => prev.map((item, index) => 
           index === rowIndex ? updatedItem : item
         ))
       }
@@ -727,7 +649,7 @@ export function DataTable({
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={invoiceColumns.length}
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -748,7 +670,7 @@ export function DataTable({
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={invoiceColumns.length}
                       className="h-24 text-center"
                     >
                       No results.
@@ -1008,7 +930,7 @@ export function DataTable({
           >
             <Table className="table-auto">
               <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
+                {billOfLandingTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
@@ -1028,97 +950,25 @@ export function DataTable({
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
                 {loading ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={billOfLandingColumns.length} className="h-24 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <IconLoader className="size-4 animate-spin" />
                         Loading...
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : billOfLandingTableData?.length ? (
+                ) : billOfLandingTable.getRowModel().rows?.length ? (
                   <SortableContext
                     items={billOfLandingTableData.map(item => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {billOfLandingTableData.map((item) => (
-                      <TableRow key={item.id}>
-                        {columns.map((column) => (
-                          <TableCell key={column.id}>
-                            {column.id === 'drag' ? (
-                              <DragHandle id={item.id} />
-                            ) : column.id === 'select' ? (
-                              <Checkbox />
-                            ) : column.id === 'source' ? (
-                              <TableCellViewer item={item} onUpdate={() => {}} />
-                            ) : column.id === 'invoice_no' ? (
-                              <Badge variant="outline" className="text-muted-foreground px-1.5">
-                                {typeof item.invoice_no === 'object' ? JSON.stringify(item.invoice_no) : item.invoice_no}
-                              </Badge>
-                            ) : column.id === 'vendor_name' ? (
-                              typeof item.vendor_name === 'object' ? JSON.stringify(item.vendor_name) : item.vendor_name
-                            ) : column.id === 'purchase_order_no' ? (
-                              typeof item.purchase_order_no === 'object' ? JSON.stringify(item.purchase_order_no) : item.purchase_order_no
-                            ) : column.id === 'item_no' ? (
-                              <div className="whitespace-nowrap">
-                                {Array.isArray(item.item_no) ? (
-                                  item.item_no.map((itemNo: any, index: number) => {
-                                    const cleanItem = typeof itemNo === 'string' ? itemNo.replace(/["\[\]]/g, '') : itemNo
-                                    return <div key={index}>{cleanItem}</div>
-                                  })
-                                ) : (
-                                  <div>{String(item.item_no).replace(/["\[\]]/g, '')}</div>
-                                )}
-                              </div>
-                            ) : column.id === 'quantity' ? (
-                              <div className="text-right">
-                                {Array.isArray(item.quantity) ? (
-                                  item.quantity.map((qty, index) => (
-                                    <div key={index}>{qty}</div>
-                                  ))
-                                ) : (
-                                  item.quantity
-                                )}
-                              </div>
-                            ) : column.id === 'price' ? (
-                              <div className="text-right">
-                                {Array.isArray(item.price) ? (
-                                  item.price.map((price, index) => (
-                                    <div key={index}>${price}</div>
-                                  ))
-                                ) : (
-                                  `$${item.price}`
-                                )}
-                              </div>
-                            ) : column.id === 'currency' ? (
-                              typeof item.currency === 'object' ? JSON.stringify(item.currency) : item.currency
-                            ) : column.id === 'total_amount' ? (
-                              <div className="text-right">{typeof item.total_amount === 'object' ? JSON.stringify(item.total_amount) : item.total_amount} kg</div>
-                            ) : column.id === 'created_at' ? (
-                              typeof item.created_at === 'string' ? new Date(item.created_at).toLocaleString() : String(item.created_at)
-                            ) : column.id === 'actions' ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="data-[state=open]:bg-muted text-muted-foreground flex size-8" size="icon">
-                                    <IconDotsVertical />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-32">
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                                  <DropdownMenuItem>Delete</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : null}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+                    {billOfLandingTable.getRowModel().rows.map((row) => (
+                      <DraggableRow key={row.id} row={row} />
                     ))}
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <TableCell colSpan={billOfLandingColumns.length} className="h-24 text-center">
                       No Bill of Lading data available.
                     </TableCell>
                   </TableRow>
@@ -1126,6 +976,83 @@ export function DataTable({
               </TableBody>
             </Table>
           </DndContext>
+        </div>
+        <div className="flex items-center justify-between px-4">
+          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+            {billOfLandingTable.getFilteredSelectedRowModel().rows.length} of{" "}
+            {billOfLandingTable.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label htmlFor="rows-per-page-bol" className="text-sm font-medium">
+                Rows per page
+              </Label>
+              <Select
+                value={`${billOfLandingTable.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  billOfLandingTable.setPageSize(Number(value))
+                }}
+              >
+                <SelectTrigger size="sm" className="w-20" id="rows-per-page-bol">
+                  <SelectValue
+                    placeholder={billOfLandingTable.getState().pagination.pageSize}
+                  />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
+              Page {billOfLandingTable.getState().pagination.pageIndex + 1} of{" "}
+              {billOfLandingTable.getPageCount()}
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => billOfLandingTable.setPageIndex(0)}
+                disabled={!billOfLandingTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to first page</span>
+                <IconChevronsLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => billOfLandingTable.previousPage()}
+                disabled={!billOfLandingTable.getCanPreviousPage()}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <IconChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => billOfLandingTable.nextPage()}
+                disabled={!billOfLandingTable.getCanNextPage()}
+              >
+                <span className="sr-only">Go to next page</span>
+                <IconChevronRight />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                onClick={() => billOfLandingTable.setPageIndex(billOfLandingTable.getPageCount() - 1)}
+                disabled={!billOfLandingTable.getCanNextPage()}
+              >
+                <span className="sr-only">Go to last page</span>
+                <IconChevronsRight />
+              </Button>
+            </div>
+          </div>
         </div>
       </TabsContent>
       <TabsContent
@@ -1163,7 +1090,7 @@ export function DataTable({
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={invoiceColumns.length}
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -1174,7 +1101,7 @@ export function DataTable({
                   </TableRow>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <TableCell colSpan={invoiceColumns.length} className="h-24 text-center">
                       No Progress data available.
                     </TableCell>
                   </TableRow>
@@ -1198,14 +1125,8 @@ const chartData = [
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--primary)",
-  },
+  desktop: { label: "Desktop", color: "var(--primary)" },
+  mobile: { label: "Mobile", color: "var(--primary)" },
 } satisfies ChartConfig
 
 function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onUpdate: (updatedItem: z.infer<typeof schema>) => void }) {
