@@ -113,7 +113,7 @@ export default function Page() {
               className="ml-auto"
             >
               <IconRobotFace className="h-4 w-4 mr-2" />
-AI Analytics
+Cortex Analyst
             </Button>
           </SiteHeader>
           <div className="flex flex-1 flex-col">
