@@ -1,13 +1,14 @@
 export async function POST(request: Request) {
   try {
-    const { subject, body, documentSet, invoiceFilename, packingList } = await request.json()
+    const { subject, body, documentSet, invoiceFilename, packingList, action } = await request.json()
     
     const payload = {
       subject,
       body,
       documentSet,
       invoiceFilename,
-      packingList
+      packingList,
+      action
     }
     
     console.log('Sending webhook payload:', JSON.stringify(payload, null, 2))

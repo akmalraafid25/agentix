@@ -21,6 +21,16 @@ export async function GET() {
       FROM PACKING_LISTS 
       WHERE CREATEDAT >= DATEADD(day, -90, CURRENT_DATE())
       GROUP BY DATE(CREATEDAT)
+      
+      UNION ALL
+      
+      SELECT 
+        DATE(CREATEDAT) as date,
+        'billOfLandings' as type,
+        COUNT(*) as count
+      FROM DOC_AI_DB.PUBLIC.BILL_OF_LANDINGS 
+      WHERE CREATEDAT >= DATEADD(day, -90, CURRENT_DATE())
+      GROUP BY DATE(CREATEDAT)
     ),
     date_range AS (
       SELECT DATEADD(day, seq4(), DATEADD(day, -90, CURRENT_DATE())) as date
@@ -29,7 +39,8 @@ export async function GET() {
     SELECT 
       dr.date,
       COALESCE(SUM(CASE WHEN dd.type = 'invoice' THEN dd.count END), 0) as invoices,
-      COALESCE(SUM(CASE WHEN dd.type = 'packing' THEN dd.count END), 0) as packing
+      COALESCE(SUM(CASE WHEN dd.type = 'packing' THEN dd.count END), 0) as packing,
+      COALESCE(SUM(CASE WHEN dd.type = 'billOfLandings' THEN dd.count END), 0) as billOfLandings
     FROM date_range dr
     LEFT JOIN daily_data dd ON dr.date = dd.date
     GROUP BY dr.date
@@ -41,7 +52,8 @@ export async function GET() {
     const chartData = rows.map((row: Record<string, unknown>) => ({
       date: new Date(String(row.DATE)).toISOString().split('T')[0],
       invoices: Number(row.INVOICES) || 0,
-      packing: Number(row.PACKING) || 0
+      packing: Number(row.PACKING) || 0,
+      billOfLandings: Number(row.BILLOFLANDINGS) || 0
     }))
     
     return Response.json(chartData)
@@ -57,7 +69,8 @@ export async function GET() {
       fallbackData.push({
         date: date.toISOString().split('T')[0],
         invoices: Math.floor(Math.random() * 50) + 10,
-        packing: Math.floor(Math.random() * 30) + 5
+        packing: Math.floor(Math.random() * 30) + 5,
+        billOfLandings: Math.floor(Math.random() * 20) + 3
       })
     }
     

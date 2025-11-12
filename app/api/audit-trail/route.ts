@@ -5,7 +5,7 @@ export async function GET() {
     const query = `
     SELECT 
       ID,
-      PENDINGREVIEWS,
+      PONUMBER,
       AGENTACTIONKEY,
       AGENTACTIONTITLE,
       AGENTACTIONDESCRIPTION,
@@ -27,7 +27,7 @@ export async function GET() {
       actionTitle: row.AGENTACTIONTITLE || '',
       actionDescription: row.AGENTACTIONDESCRIPTION || '',
       actionContent: row.AGENTACTIONCONTENT || '',
-      pendingReviews: row.PENDINGREVIEWS || 0,
+      poNumber: row.PONUMBER || 0,
       status: 'Success',
       compliance: 'Compliant'
     }))

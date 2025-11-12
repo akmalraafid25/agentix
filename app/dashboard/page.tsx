@@ -18,18 +18,21 @@ export default function Page() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [invoiceData, setInvoiceData] = useState<unknown[]>([])
   const [packingData, setPackingData] = useState<unknown[]>([])
+  const [billOfLandingData, setBillOfLandingData] = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
     try {
       console.log('Polling for new data...')
-      const [invoices, packing] = await Promise.all([
+      const [invoices, packing, billOfLandings] = await Promise.all([
         fetch('/api/invoices').then(res => res.json()),
-        fetch('/api/packing').then(res => res.json())
+        fetch('/api/packing').then(res => res.json()),
+        fetch('/api/bill-of-landings').then(res => res.json())
       ])
       
       const newInvoices = Array.isArray(invoices) ? invoices : []
       const newPacking = Array.isArray(packing) ? packing : []
+      const newBillOfLandings = Array.isArray(billOfLandings) ? billOfLandings : []
       
       // Only update if data has changed
       setInvoiceData(prev => {
@@ -47,10 +50,27 @@ export default function Page() {
         }
         return prev
       })
+      
+      setBillOfLandingData(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(newBillOfLandings)) {
+          console.log('Bill of Lading data updated:', newBillOfLandings.length, 'items')
+          const cleanedData = newBillOfLandings.map((item: any) => ({
+            ...item,
+            invoice_no: typeof item.invoice_no === 'object' ? JSON.stringify(item.invoice_no) : item.invoice_no,
+            vendor_name: typeof item.vendor_name === 'object' ? JSON.stringify(item.vendor_name) : item.vendor_name,
+            purchase_order_no: typeof item.purchase_order_no === 'object' ? JSON.stringify(item.purchase_order_no) : item.purchase_order_no,
+            currency: typeof item.currency === 'object' ? JSON.stringify(item.currency) : item.currency,
+            total_amount: typeof item.total_amount === 'object' ? JSON.stringify(item.total_amount) : item.total_amount
+          }))
+          return cleanedData.sort((a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        }
+        return prev
+      })
     } catch (err) {
       console.error('API Error:', err)
       setInvoiceData([])
       setPackingData([])
+      setBillOfLandingData([])
     } finally {
       setLoading(false)
     }
@@ -103,7 +123,7 @@ AI Analytics
                 <div className="px-4 lg:px-6">
                   <ChartAreaInteractive />
                 </div>
-                <DataTable data={invoiceData as any} packingData={packingData as any} loading={loading} onTabChange={handleTabChange} />
+                <DataTable data={invoiceData as any} packingData={packingData as any} billOfLandingData={billOfLandingData as any} loading={loading} onTabChange={handleTabChange} />
               </div>
             </div>
           </div>

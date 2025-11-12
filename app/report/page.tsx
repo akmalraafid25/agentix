@@ -74,15 +74,29 @@ const initialData = [
 
 export default function Page() {
   const [pendingReviewData, setPendingReviewData] = useState<any[]>([])
+  const [analyticsData, setAnalyticsData] = useState<any>({
+    monthlyTrends: [],
+    supplierDistribution: [],
+    topSuppliers: []
+  })
 
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [invoices, packing] = await Promise.all([
+        const [invoices, packing, monthlyTrends, supplierDistribution, topSuppliers] = await Promise.all([
           fetch('/api/invoices').then(res => res.json()),
-          fetch('/api/packing').then(res => res.json())
+          fetch('/api/packing').then(res => res.json()),
+          fetch('/api/analytics?chart=monthly-trends').then(res => res.json()),
+          fetch('/api/analytics?chart=supplier-distribution').then(res => res.json()),
+          fetch('/api/analytics?chart=top-suppliers').then(res => res.json())
         ])
+        
+        setAnalyticsData({
+          monthlyTrends,
+          supplierDistribution,
+          topSuppliers
+        })
         
         const poGroups: Record<string, any> = {}
         
@@ -148,7 +162,9 @@ export default function Page() {
           }
         })
         
-        setPendingReviewData(combinedData)
+        // Filter out items that are already matched
+        const filteredData = combinedData.filter(item => item.exceptionDetails !== 'Match')
+        setPendingReviewData(filteredData)
       } catch (error) {
         console.error('Error fetching data:', error)
         setPendingReviewData(initialData)
@@ -469,10 +485,11 @@ export default function Page() {
                     <div className="rounded-lg border p-6">
                       <h3 className="text-lg font-semibold mb-4">Monthly Document Trend</h3>
                       <ChartContainer config={{}} className="h-[300px]">
-                        <LineChart data={[{month: 'Jan', documents: 1250}, {month: 'Feb', documents: 1350}, {month: 'Mar', documents: 1550}]}>
+                        <LineChart data={analyticsData.monthlyTrends}>
                           <XAxis dataKey="month" />
                           <YAxis />
-                          <Line type="monotone" dataKey="documents" stroke="#3b82f6" strokeWidth={2} />
+                          <Line type="monotone" dataKey="invoices" stroke="#3b82f6" strokeWidth={2} name="Invoices" />
+                          <Line type="monotone" dataKey="packingLists" stroke="#10b981" strokeWidth={2} name="Packing Lists" />
                           <ChartTooltip content={<ChartTooltipContent />} />
                         </LineChart>
                       </ChartContainer>
@@ -481,14 +498,28 @@ export default function Page() {
                     <div className="rounded-lg border p-6">
                       <h3 className="text-lg font-semibold mb-4">Supplier Distribution</h3>
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded"></div><span className="text-sm">Acme Manufacturing</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-cyan-500 rounded"></div><span className="text-sm">Global Tech Solutions</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-500 rounded"></div><span className="text-sm">Prime Industries</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500 rounded"></div><span className="text-sm">Others</span></div>
+                        {(analyticsData.supplierDistribution || []).slice(0, 4).map((supplier: any, index: number) => {
+                          const colors = ['bg-blue-500', 'bg-cyan-500', 'bg-orange-500', 'bg-purple-500']
+                          return (
+                            <div key={index} className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded ${colors[index]}`}></div>
+                              <span className="text-sm">{supplier.NAME || supplier.name || 'Unknown'}</span>
+                            </div>
+                          )
+                        })}
                       </div>
                       <ChartContainer config={{}} className="h-[250px]">
                         <PieChart>
-                          <Pie data={[{name: 'Acme Manufacturing', value: 35}, {name: 'Global Tech Solutions', value: 15}, {name: 'Prime Industries', value: 20}, {name: 'Others', value: 30}]} cx="50%" cy="50%" outerRadius={80} dataKey="value">
+                          <Pie 
+                            data={(analyticsData.supplierDistribution || []).map((item: any) => ({
+                              name: item.NAME || item.name || 'Unknown',
+                              value: item.VALUE || item.value || 0
+                            }))}
+                            cx="50%" 
+                            cy="50%" 
+                            outerRadius={80} 
+                            dataKey="value"
+                          >
                             <Cell fill="#3b82f6" />
                             <Cell fill="#06b6d4" />
                             <Cell fill="#f97316" />
@@ -521,7 +552,7 @@ export default function Page() {
                       <h3 className="text-lg font-semibold mb-4">Top Performing Suppliers</h3>
                       <div className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={[{supplier: 'Acme', score: 99.5, fill: '#3b82f6'}, {supplier: 'Global Tech', score: 98.2, fill: '#06b6d4'}, {supplier: 'Prime', score: 97.8, fill: '#f97316'}, {supplier: 'Stellar', score: 96.5, fill: '#10b981'}, {supplier: 'Nexus', score: 95.1, fill: '#a855f7'}]}>
+                          <BarChart data={analyticsData.topSuppliers}>
                             <XAxis dataKey="supplier" fontSize={10} />
                             <YAxis domain={[90, 100]} />
                             <Bar dataKey="score" fill="#3b82f6" />
