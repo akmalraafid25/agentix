@@ -12,22 +12,26 @@ import {
 export default function Page() {
   const [invoiceData, setInvoiceData] = useState<any[]>([])
   const [packingData, setPackingData] = useState<any[]>([])
+  const [billOfLandingData, setBillOfLandingData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [invoices, packing] = await Promise.all([
+        const [invoices, packing, billOfLandings] = await Promise.all([
           fetch('/api/invoices').then(res => res.json()),
-          fetch('/api/packing').then(res => res.json())
+          fetch('/api/packing').then(res => res.json()),
+          fetch('/api/bill-of-landings').then(res => res.json())
         ])
         setInvoiceData(Array.isArray(invoices) ? invoices.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [])
         setPackingData(Array.isArray(packing) ? packing.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [])
+        setBillOfLandingData(Array.isArray(billOfLandings) ? billOfLandings.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : [])
         setLoading(false)
       } catch (err) {
         console.error('API Error:', err)
         setInvoiceData([])
         setPackingData([])
+        setBillOfLandingData([])
         setLoading(false)
       }
     }
@@ -56,7 +60,7 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-6">
               </div>
-              <DataTable data={invoiceData} packingData={packingData} loading={loading} />
+              <DataTable data={invoiceData} packingData={packingData} billOfLandingData={billOfLandingData} loading={loading} />
             </div>
           </div>
         </div>

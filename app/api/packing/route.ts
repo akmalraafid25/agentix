@@ -1,57 +1,39 @@
 import { executeQuery } from '@/lib/snowflake'
-import fs from 'fs'
-import path from 'path'
 
 export async function GET() {
   try {
-    const query = `
-    SELECT
-  p.ID AS PACKING_LIST_ID,
-  p.PONUMBER,
-  p.ORGANIZATIONS,
-  p.SOURCE,
-  p.TOTALCARTON,
-  p.TOTALGROSSWEIGHT,
-  p.TOTALMEASUREMENT,
-  LISTAGG(i.ITEMCODE, '\n') AS ITEMCODES,
-  LISTAGG(TO_VARCHAR(i.QUANTITY), '\n') AS QUANTITIES,
-  p.CREATEDAT,
-  p.UPDATEDAT
-FROM PACKING_LISTS p
-LEFT JOIN PACKING_LIST_ITEMS i
-  ON p.ID = i.PACKING_LIST_ID
-GROUP BY
-  p.ID, p.PONUMBER, p.ORGANIZATIONS, p.SOURCE,
-  p.TOTALCARTON, p.TOTALGROSSWEIGHT, p.TOTALMEASUREMENT,
-  p.CREATEDAT, p.UPDATEDAT
-ORDER BY p.CREATEDAT DESC;
-    `
-    const rows = await executeQuery(query) as Record<string, unknown>[]
+    const rows = await executeQuery(`
+      SELECT 
+        pl.ID, pl.ORGANIZATIONS, pl.PONUMBER, pl.SOURCE, pl.CREATEDAT,
+        pl.TOTALMEASUREMENT, pl.TOTALGROSSWEIGHT, pl.TOTALCARTON,
+        ARRAY_AGG(pli.ITEMCODE) as ITEM_CODES,
+        ARRAY_AGG(pli.QUANTITY) as QUANTITIES
+      FROM DOC_AI_DB.PUBLIC.PACKING_LISTS pl
+      LEFT JOIN DOC_AI_DB.PUBLIC.PACKING_LIST_ITEMS pli ON pl.ID = pli.PACKING_LIST_ID
+      GROUP BY pl.ID, pl.ORGANIZATIONS, pl.PONUMBER, pl.SOURCE, pl.CREATEDAT,
+               pl.TOTALMEASUREMENT, pl.TOTALGROSSWEIGHT, pl.TOTALCARTON
+      ORDER BY pl.CREATEDAT DESC
+    `) as Record<string, unknown>[]
     
-    // Transform Snowflake data to match expected schema
-    const transformedData = rows.map((row: Record<string, unknown>) => ({
-      id: row.PACKING_LIST_ID,
-      source: row.SOURCE || `packing_${String(row.PACKING_LIST_ID).padStart(3, '0')}.pdf`,
-      invoice_no: "",
+    const transformedData = rows.map(row => ({
+      id: row.ID,
+      source: row.SOURCE || `packing_${String(row.ID).padStart(3, '0')}.pdf`,
+      invoice_no: row.PONUMBER || `PL-${String(row.ID).padStart(3, '0')}`,
       vendor_name: row.ORGANIZATIONS || "Unknown Organization",
-      purchase_order_no: row.PONUMBER || `PO-2024-${String(row.PACKING_LIST_ID).padStart(3, '0')}`,
-      item_no: row.ITEMCODES ? String(row.ITEMCODES).split('\n') : [],
-      quantity: row.QUANTITIES ? String(row.QUANTITIES).split('\n') : [],
-      price: [`${row.TOTALMEASUREMENT || 0}`],
+      purchase_order_no: row.PONUMBER || `PO-2024-${String(row.ID).padStart(3, '0')}`,
+      item_no: Array.isArray(row.ITEM_CODES) ? row.ITEM_CODES.filter(Boolean) : [],
+      quantity: [String(row.TOTALCARTON || 0)],
+      price: [String(row.TOTALGROSSWEIGHT || 0)],
       currency: "USD",
       created_at: row.CREATEDAT ? new Date(String(row.CREATEDAT)).toISOString() : new Date().toISOString(),
       header: `Packing List ${row.ORGANIZATIONS || 'Unknown'}`,
-      type: "Packing List"
+      type: "Packing List",
+      total_amount: String(row.TOTALGROSSWEIGHT || 0)
     }))
     
     return Response.json(transformedData)
   } catch (error) {
-    console.error('Snowflake query error:', error)
-    // Fallback to local data
-    const filePath = path.join(process.cwd(), 'app/dashboard/data.json')
-    const fileContents = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(fileContents)
-
-    return Response.json(data)
+    console.error('Packing query error:', error)
+    return Response.json([])
   }
 }

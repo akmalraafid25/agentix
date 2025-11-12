@@ -9,7 +9,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { filename } = await params
     
     // Determine folder based on filename
-    const folder = filename.toLowerCase().includes('inv') ? 'invoice' : 'packing_list'
+    const lowerFilename = filename.toLowerCase()
+    let folder
+    
+    if (lowerFilename.includes('inv')) {
+      folder = 'invoice'
+    } else if (lowerFilename.includes('packing') || lowerFilename.includes('pack') || lowerFilename.includes('pl')) {
+      folder = 'packing_list'
+    } else if (lowerFilename.includes('bol') || lowerFilename.includes('lading') || lowerFilename.includes('bl') || lowerFilename.includes('bill')) {
+      folder = 'bill_of_lading'
+    } else {
+      folder = 'other'
+    }
     
     // Get PDF file from Snowflake stage
     const query = `
