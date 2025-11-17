@@ -361,7 +361,7 @@ export function DataTable({
     ...baseColumns.slice(0, -2),
     {
       accessorKey: "price",
-      header: "Price",
+      header: "Line Amount",
       cell: ({ row }: any) => (
         <div className="text-right">
           {Array.isArray(row.original.price) ? (
