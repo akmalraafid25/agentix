@@ -42,10 +42,12 @@ export async function connectToSnowflake() {
 
 export async function executeQuery(query: string) {
   return new Promise((resolve, reject) => {
-    const conn = getConnection()
+    let conn = getConnection()
     console.log('Checking Snowflake connection status:', conn.isUp())
     if (!conn.isUp()) {
       console.log('Reconnecting to Snowflake...')
+      connection = null // Reset connection
+      conn = getConnection() // Create new connection
       conn.connect((err, conn) => {
         if (err) {
           console.error('Snowflake reconnection failed:', err)
