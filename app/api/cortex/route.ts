@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             }]
           }
         ],
-        semantic_view: 'AGENTIX.PUBLIC.AGENTIX'
+        semantic_view: 'DOC_AI_DB.PUBLIC.AGENTIX'
       })
     })
     

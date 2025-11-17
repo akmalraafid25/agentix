@@ -1165,83 +1165,62 @@ function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onU
             <DrawerHeader className="gap-1">
               <DrawerTitle>{item.header}</DrawerTitle>
               <DrawerDescription>
-                Showing total visitors for the last 6 months
+                Document Information
               </DrawerDescription>
             </DrawerHeader>
-            <ChartContainer config={chartConfig}>
-              <AreaChart
-                accessibilityLayer
-                data={chartData}
-                margin={{
-                  left: 0,
-                  right: 10,
-                }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  tickFormatter={(value) => value.slice(0, 3)}
-                  hide
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Area
-                  dataKey="mobile"
-                  type="natural"
-                  fill="var(--color-mobile)"
-                  fillOpacity={0.6}
-                  stroke="var(--color-mobile)"
-                  stackId="a"
-                />
-                <Area
-                  dataKey="desktop"
-                  type="natural"
-                  fill="var(--color-desktop)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-desktop)"
-                  stackId="a"
-                />
-              </AreaChart>
-            </ChartContainer>
             <Separator />
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="invoice_no">Document No.</Label>
+                <Label htmlFor="invoice_no">
+                  {item.type === 'Packing List' ? 'Packing List No.' : 
+                   item.type === 'Bill of Lading' ? 'Bill of Lading No.' : 'Document No.'}
+                </Label>
                 <Input id="invoice_no" value={formData.invoice_no || ''} onChange={(e) => setFormData({...formData, invoice_no: e.target.value})} />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="vendor_name">Vendor Name</Label>
+                <Label htmlFor="vendor_name">
+                  {item.type === 'Bill of Lading' ? 'Organization' : 'Vendor Name'}
+                </Label>
                 <Input id="vendor_name" value={formData.vendor_name || ''} onChange={(e) => setFormData({...formData, vendor_name: e.target.value})} />
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="currency">Currency</Label>
-              <Select value={formData.currency || 'USD'} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                <SelectTrigger id="currency" className="w-full">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="items">Items</Label>
-              <textarea 
-                id="items" 
-                value={Array.isArray(formData.item_no) ? formData.item_no.join('\n') : ''} 
-                readOnly 
-                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-              />
-            </div>
+            {item.type === 'Bill of Lading' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="vessel">Vessel</Label>
+                  <Input id="vessel" value={formData.purchase_order_no || ''} onChange={(e) => setFormData({...formData, purchase_order_no: e.target.value})} />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="package_code">Package Code</Label>
+                  <Input id="package_code" value={Array.isArray(formData.item_no) ? formData.item_no.join(', ') : ''} readOnly />
+                </div>
+              </div>
+            )}
+            {item.type === 'Packing List' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="total_cartons">Total Cartons</Label>
+                  <Input id="total_cartons" value={formData.quantity?.toString() || ''} readOnly />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="gross_weight">Total Gross Weight</Label>
+                  <Input id="gross_weight" value={`${formData.total_amount} kg`} readOnly />
+                </div>
+              </div>
+            )}
+
+            {item.type === 'Invoice' && (
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="items">Items</Label>
+                <textarea 
+                  id="items" 
+                  value={Array.isArray(formData.item_no) ? formData.item_no.join('\n') : ''} 
+                  readOnly 
+                  className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-3">
               <Label htmlFor="created_at">Created At</Label>
               <Input id="created_at" value={formData.created_at || ''} onChange={(e) => setFormData({...formData, created_at: e.target.value})} />
