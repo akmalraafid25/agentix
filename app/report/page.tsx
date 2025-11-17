@@ -52,6 +52,7 @@ const initialData = [
     packingList: "PL-001",
     billOfLading: "BOL-001",
     vendor: "SoftwareOne Indonesia",
+    quantity: 25,
     amount: "1,500,000",
     exceptionDetails: "Missing signature",
     agentsAction: "Pending verification",
@@ -64,6 +65,7 @@ const initialData = [
     packingList: "PL-002",
     billOfLading: "BOL-002",
     vendor: "Tech Solutions",
+    quantity: 40,
     amount: "2,750,000",
     exceptionDetails: "Amount mismatch",
     agentsAction: "Under review",
@@ -126,9 +128,11 @@ export default function Page() {
           } else if (!hasPacking) {
             exceptionDetails = 'Missing Packing List'
           } else {
-            // Check if items match between invoice and packing
+            // Check if items and quantities match between invoice and packing
             const invoiceItems = group.invoice.item_no || []
             const packingItems = group.packing.item_no || []
+            const invoiceQty = group.invoice.quantity || []
+            const packingQty = group.packing.quantity || []
             
             if (invoiceItems.length === 0 || packingItems.length === 0) {
               exceptionDetails = 'Missing Items Data'
@@ -138,14 +142,27 @@ export default function Page() {
               )
               
               if (matchingItems.length === invoiceItems.length && matchingItems.length === packingItems.length) {
-                exceptionDetails = 'Match'
+                // Check quantities for matching items
+                let qtyMismatch = false
+                for (let i = 0; i < invoiceItems.length; i++) {
+                  const packingIndex = packingItems.findIndex((item: string) => item === invoiceItems[i])
+                  if (packingIndex >= 0 && Number(invoiceQty[i]) !== Number(packingQty[packingIndex])) {
+                    qtyMismatch = true
+                    break
+                  }
+                }
+                exceptionDetails = qtyMismatch ? 'Quantity Mismatch' : 'Match'
               } else if (matchingItems.length > 0) {
                 exceptionDetails = 'Partial Match'
               } else {
-                exceptionDetails = 'Item Mismatch'
+                exceptionDetails = 'Item Code Mismatch'
               }
             }
           }
+          
+          // Calculate total quantity from packing list or invoice
+          const totalQuantity = group.packing?.quantity?.reduce((sum: number, qty: string) => sum + Number(qty || 0), 0) || 
+                               group.invoice?.quantity?.reduce((sum: number, qty: string) => sum + Number(qty || 0), 0) || 0
           
           return {
             documentSet: `DOC-${po}`,
@@ -154,6 +171,7 @@ export default function Page() {
             packingList: group.packing?.source || '',
             billOfLading: '',
             vendor: group.invoice?.vendor_name || group.packing?.vendor_name || '',
+            quantity: totalQuantity,
             amount: group.invoice?.total_amount || '0',
             exceptionDetails,
             agentsAction: 'Pending verification',
@@ -314,6 +332,7 @@ export default function Page() {
                           <TableHead>Packing List</TableHead>
                           <TableHead>Bill of Lading</TableHead>
                           <TableHead>Vendor</TableHead>
+                          <TableHead>Cartons</TableHead>
                           <TableHead>Amount (IDR)</TableHead>
                           <TableHead>Exception Details</TableHead>
                           <TableHead>Agent&apos;s Action</TableHead>
@@ -332,6 +351,7 @@ export default function Page() {
                             <TableCell>{item.packingList}</TableCell>
                             <TableCell>{item.billOfLading}</TableCell>
                             <TableCell>{item.vendor}</TableCell>
+                            <TableCell className="text-center">{item.quantity || 0}</TableCell>
                             <TableCell className="text-right">IDR {item.amount}</TableCell>
                             <TableCell>
                               <Badge 
@@ -606,7 +626,8 @@ export default function Page() {
                     body: actionData.body,
                     documentSet: selectedDocument,
                     invoiceFilename: actionData.invoiceFilename,
-                    packingList: actionData.packingList
+                    packingList: actionData.packingList,
+                    action: actionData.type
                   })
                 })
                 if (response.ok) {

@@ -54,6 +54,7 @@ export function ItemsMatchDialog({ documentSet }: ItemsMatchDialogProps) {
             matchStatus = 'invoice_only'
             mismatchReason = 'Item only exists in invoice'
           } else {
+            // Check both item code and quantity match
             const getQuantityForItem = (doc: any, itemCode: string) => {
               const itemCodes = Array.isArray(doc.item_no) ? doc.item_no : [doc.item_no]
               const quantities = Array.isArray(doc.quantity) ? doc.quantity : [doc.quantity]

@@ -22,7 +22,7 @@ export async function GET() {
       vendor_name: row.ORGANIZATIONS || "Unknown Organization",
       purchase_order_no: row.PONUMBER || `PO-2024-${String(row.ID).padStart(3, '0')}`,
       item_no: Array.isArray(row.ITEM_CODES) ? row.ITEM_CODES.filter(Boolean) : [],
-      quantity: [String(row.TOTALCARTON || 0)],
+      quantity: Array.isArray(row.QUANTITIES) ? row.QUANTITIES.map(q => String(q || 0)) : [String(row.TOTALCARTON || 0)],
       price: [String(row.TOTALGROSSWEIGHT || 0)],
       currency: "USD",
       created_at: row.CREATEDAT ? new Date(String(row.CREATEDAT)).toISOString() : new Date().toISOString(),

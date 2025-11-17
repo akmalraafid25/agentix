@@ -8,7 +8,7 @@ export async function POST(request: Request) {
       documentSet,
       invoiceFilename,
       packingList,
-      action
+      action: action || null
     }
     
     console.log('Sending webhook payload:', JSON.stringify(payload, null, 2))

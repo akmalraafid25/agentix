@@ -425,7 +425,7 @@ export function DataTable({
         return { ...col, header: createSortableHeader("Packing List No.") }
       }
       if ('accessorKey' in col && col.accessorKey === 'quantity') {
-        return { ...col, header: 'Total Cartons' }
+        return { ...col, header: 'Quantity' }
       }
       return col
     }),
@@ -452,7 +452,7 @@ export function DataTable({
         return { ...col, header: "Package Code" }
       }
       if ('accessorKey' in col && col.accessorKey === 'quantity') {
-        return { ...col, header: 'Total Cartons' }
+        return { ...col, header: 'Quantity' }
       }
       return col
     }),
@@ -1200,7 +1200,7 @@ function TableCellViewer({ item, onUpdate }: { item: z.infer<typeof schema>, onU
             {item.type === 'Packing List' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-3">
-                  <Label htmlFor="total_cartons">Total Cartons</Label>
+                  <Label htmlFor="total_cartons">Quantity</Label>
                   <Input id="total_cartons" value={formData.quantity?.toString() || ''} readOnly />
                 </div>
                 <div className="flex flex-col gap-3">
