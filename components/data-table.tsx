@@ -137,22 +137,26 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-const createSortableHeader = (title: string) => ({ column }: any) => (
-  <Button
-    variant="ghost"
-    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    className="h-8 px-2"
-  >
-    {title}
-    {column.getIsSorted() === "asc" ? (
-      <IconChevronUp className="ml-2 h-4 w-4" />
-    ) : column.getIsSorted() === "desc" ? (
-      <IconChevronDown className="ml-2 h-4 w-4" />
-    ) : (
-      <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
-    )}
-  </Button>
-)
+const createSortableHeader = (title: string) => {
+  const SortableHeader = ({ column }: any) => (
+    <Button
+      variant="ghost"
+      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      className="h-8 px-2"
+    >
+      {title}
+      {column.getIsSorted() === "asc" ? (
+        <IconChevronUp className="ml-2 h-4 w-4" />
+      ) : column.getIsSorted() === "desc" ? (
+        <IconChevronDown className="ml-2 h-4 w-4" />
+      ) : (
+        <IconChevronDown className="ml-2 h-4 w-4 opacity-50" />
+      )}
+    </Button>
+  )
+  SortableHeader.displayName = `SortableHeader-${title}`
+  return SortableHeader
+}
 
 const baseColumns: ColumnDef<z.infer<typeof schema>>[] = [
   {
