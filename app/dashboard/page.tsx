@@ -124,10 +124,6 @@ Cortex Analyst
                   <ChartAreaInteractive />
                 </div>
                 <DataTable data={invoiceData as any} packingData={packingData as any} billOfLandingData={billOfLandingData as any} loading={loading} onTabChange={handleTabChange} />
-        {(() => {
-          console.log('🔍 DataTable Props Debug:', { invoiceData, packingData, billOfLandingData, loading })
-          return null
-        })()}
               </div>
             </div>
           </div>
