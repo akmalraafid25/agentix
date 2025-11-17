@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import { AnalyticsSidebar } from "@/components/analytics-sidebar"
 import {
   SidebarInset,
   SidebarProvider,
@@ -37,7 +38,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { IconChevronDown, IconLayoutColumns, IconCheck, IconX, IconExclamationMark } from "@tabler/icons-react"
+import { IconChevronDown, IconLayoutColumns, IconCheck, IconX, IconExclamationMark, IconRobotFace } from "@tabler/icons-react"
 import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { toast } from "sonner"
@@ -75,6 +76,7 @@ const initialData = [
 ]
 
 export default function Page() {
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
   const [pendingReviewData, setPendingReviewData] = useState<any[]>([])
   const [analyticsData, setAnalyticsData] = useState<any>({
     monthlyTrends: [],
@@ -273,8 +275,18 @@ export default function Page() {
     >
       <AppSidebar variant="inset" />
       <div className="flex flex-1">
-        <SidebarInset className="flex-1">
-        <SiteHeader />
+        <SidebarInset className={`flex-1 transition-all duration-300 ${isAnalyticsOpen ? 'mr-96' : 'mr-0'}`}>
+          <SiteHeader>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAnalyticsOpen(!isAnalyticsOpen)}
+              className="ml-auto"
+            >
+              <IconRobotFace className="h-4 w-4 mr-2" />
+              Cortex Analyst
+            </Button>
+          </SiteHeader>
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -586,6 +598,10 @@ export default function Page() {
           </div>
         </div>
         </SidebarInset>
+        <AnalyticsSidebar 
+          isOpen={isAnalyticsOpen} 
+          onClose={() => setIsAnalyticsOpen(false)} 
+        />
         
         {sidebarOpen && (
           <>
