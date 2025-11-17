@@ -1,66 +1,28 @@
 import { executeQuery } from '@/lib/snowflake'
 
 export async function GET() {
-  console.log('Invoice API: Starting request')
   try {
-    const query = `
-    SELECT
-        inv.ID AS INVOICE_ID,
-        MAX(inv.VENDORNAME) as VENDOR_NAME,
-        inv.INVOICENO AS INVOICE_NO,
-        inv.PONUMBER AS PO_NUMBER,
-        inv.SOURCE,
-        LISTAGG(it.ITEMCODE, ', ') WITHIN GROUP (ORDER BY it.ITEMCODE) AS ITEM_CODES,
-        LISTAGG(it.QUANTITY::STRING, ', ') WITHIN GROUP (ORDER BY it.ITEMCODE) AS QUANTITIES,
-        LISTAGG(it.UNITPRICE::STRING, ', ') WITHIN GROUP (ORDER BY it.ITEMCODE) AS PRICES,
-        SUM(TRY_TO_NUMBER(it.UNITPRICE)) AS TOTAL_AMOUNT,
-        inv.CURRENCY,
-        inv.CREATEDAT AS "Created At"
-    FROM (
-        SELECT 
-            ID,
-            VENDORNAME,
-            INVOICENO,
-            PONUMBER,
-            SOURCE,
-            CURRENCY,
-            CREATEDAT,
-            f.value::NUMBER AS ITEM_ID
-        FROM INVOICES,
-             LATERAL FLATTEN(input => ITEMS) f
-    ) inv
-    LEFT JOIN INVOICE_ITEMS it 
-           ON it.ID = inv.ITEM_ID
-    GROUP BY inv.ID, inv.INVOICENO, inv.PONUMBER, inv.SOURCE, inv.CURRENCY, inv.CREATEDAT;
-    `
-    console.log('Invoice API: Executing query:', query)
+    const query = `SELECT * FROM INVOICES`
     const rows = await executeQuery(query) as Record<string, unknown>[]
-    console.log('Invoice API: Query result rows:', rows.length)
-    console.log('Invoice API: Sample row:', rows[0])
     
-    // Transform Snowflake data to match expected schema
     const transformedData = rows.map((row: Record<string, unknown>) => ({
-      id: row.INVOICE_ID,
-      source: row.SOURCE ? `${row.SOURCE}` : `invoice_${String(row.INVOICE_ID).padStart(3, '0')}`,
-      invoice_no: row.INVOICE_NO || `-`,
-      vendor_name: `${row.VENDOR_NAME}`,
-      purchase_order_no: row.PO_NUMBER,
-      item_no: row.ITEM_CODES ? String(row.ITEM_CODES).split(', ') : [],
-      quantity: row.QUANTITIES ? String(row.QUANTITIES).split(', ') : [],
-      price: row.PRICES ? String(row.PRICES).split(', ') : [],
+      id: row.ID,
+      source: row.SOURCE || `invoice_${String(row.ID).padStart(3, '0')}`,
+      invoice_no: row.INVOICENO || `-`,
+      vendor_name: row.VENDORNAME || 'Unknown',
+      purchase_order_no: row.PONUMBER,
+      item_no: [],
+      quantity: [],
+      price: [],
       currency: row.CURRENCY || "USD",
-      created_at: row["Created At"] ? new Date(String(row["Created At"])).toISOString() : new Date().toISOString(),
+      created_at: row.CREATEDAT ? new Date(String(row.CREATEDAT)).toISOString() : new Date().toISOString(),
       header: `Invoice SoftwareOne Indonesia`,
       type: "Invoice",
-      total_amount: row.TOTAL_AMOUNT ? row.TOTAL_AMOUNT.toString() : "0"
+      total_amount: "0"
     }))
     
-    console.log('Invoice API: Transformed data count:', transformedData.length)
-    console.log('Invoice API: Sample transformed data:', transformedData[0])
     return Response.json(transformedData)
   } catch (error) {
-    console.error('Invoice API: Snowflake query error:', error)
-    console.error('Invoice API: Error details:', error instanceof Error ? error.message : 'Unknown error')
     return Response.json([])
   }
 }
