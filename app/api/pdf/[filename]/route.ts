@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     
     // Get PDF file from Snowflake stage
     const query = `
-      SELECT GET_PRESIGNED_URL('@STAGE_DOCUMENT', '${folder}/${filename}', 3600) AS url
+      SELECT GET_PRESIGNED_URL('@STAGE_DOCUMENTS', '${folder}/${filename}', 3600) AS url
     `
     
     const result = await executeQuery(query) as Record<string, unknown>[]
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     
     try {
       // Upload to Snowflake stage
-      const uploadQuery = `PUT file://${tempPath.replace(/\\/g, '/')} @STAGE_DOCUMENT/${folder}/ AUTO_COMPRESS=FALSE`
+      const uploadQuery = `PUT file://${tempPath.replace(/\\/g, '/')} @STAGE_DOCUMENTS/${folder}/ AUTO_COMPRESS=FALSE`
       console.log('Upload query:', uploadQuery)
       const result = await executeQuery(uploadQuery)
       console.log('Upload result:', result)

@@ -65,45 +65,36 @@ export function AnalyticsSidebar({ isOpen, onClose }: AnalyticsSidebarProps) {
       const { response: cortexResponse } = await response.json()
       
       if (Array.isArray(cortexResponse)) {
-        cortexResponse.forEach((item, index) => {
-          let content = ''
-          
+        let combinedContent = ''
+        
+        cortexResponse.forEach((item) => {
           if (item.type === 'text') {
-            content = item.text
-          } else if (item.type === 'sql') {
-            // Format SQL as code block with preserved indentation
-            content = '<strong>SQL Query:</strong><br/><br/>'
-            content += '<div class="bg-gray-100 border rounded p-3 font-mono text-xs overflow-x-auto">'
-            content += '<pre class="whitespace-pre">' + item.statement + '</pre>'
-            content += '</div>'
+            combinedContent += item.text + '<br/><br/>'
           } else if (item.type === 'results') {
-            content = '<strong>Query Results:</strong><br/><br/>'
             if (item.results && item.results.length > 0) {
               const headers = Object.keys(item.results[0])
-              content += '<div class="overflow-x-auto">'
-              content += '<table class="min-w-full border border-gray-300 text-xs">'
-              content += '<thead><tr>' + headers.map(h => `<th class="border border-gray-300 px-1 py-1 text-left">${h}</th>`).join('') + '</tr></thead>'
-              content += '<tbody>'
+              combinedContent += '<div class="overflow-x-auto mt-2">'
+              combinedContent += '<table class="min-w-full border border-gray-300 text-xs">'
+              combinedContent += '<thead><tr>' + headers.map(h => `<th class="border border-gray-300 px-2 py-1 text-left bg-gray-50">${h}</th>`).join('') + '</tr></thead>'
+              combinedContent += '<tbody>'
               item.results.forEach((row: any) => {
-                content += '<tr>' + headers.map(h => `<td class="border border-gray-300 px-1 py-1">${row[h] || ''}</td>`).join('') + '</tr>'
+                combinedContent += '<tr>' + headers.map(h => `<td class="border border-gray-300 px-2 py-1">${row[h] || ''}</td>`).join('') + '</tr>'
               })
-              content += '</tbody></table></div>'
+              combinedContent += '</tbody></table></div>'
             } else {
-              content += 'No results found'
+              combinedContent += 'No results found<br/><br/>'
             }
           }
-          
-          const assistantMessage: Message = {
-            id: (Date.now() + index + 1).toString(),
-            content: content,
-            sender: 'assistant',
-            timestamp: new Date()
-          }
-          
-          setTimeout(() => {
-            setMessages(prev => [...prev, assistantMessage])
-          }, index * 500)
         })
+        
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: combinedContent.replace(/<br\/><br\/>$/, ''), // Remove trailing breaks
+          sender: 'assistant',
+          timestamp: new Date()
+        }
+        
+        setMessages(prev => [...prev, assistantMessage])
       } else {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
