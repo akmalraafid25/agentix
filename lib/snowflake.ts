@@ -14,10 +14,12 @@ function getConnection() {
       hasPrivateKey: !!process.env.SNOWFLAKE_PRIVATE_KEY
     })
     
-    // Clean the private key by removing quotes and extra whitespace
-    const privateKey = process.env.SNOWFLAKE_PRIVATE_KEY!
-      .replace(/'/g, '')  // Remove single quotes
-      .trim()             // Remove whitespace
+    // Clean the private key for Amplify deployment
+    let privateKey = process.env.SNOWFLAKE_PRIVATE_KEY!
+    if (privateKey.includes('\\n')) {
+      privateKey = privateKey.replace(/\\n/g, '\n')
+    }
+    privateKey = privateKey.replace(/'/g, '').trim()
     
     connection = snowflake.createConnection({
       account: process.env.SNOWFLAKE_ACCOUNT!.toLowerCase(),
