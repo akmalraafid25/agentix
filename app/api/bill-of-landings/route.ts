@@ -39,6 +39,8 @@ export async function GET() {
     return Response.json(transformedData)
   } catch (error) {
     console.error('Bill of Landings query error:', error)
-    return Response.json([])
+    const response = Response.json([])
+    response.headers.set('X-Debug-Error', error instanceof Error ? error.message : 'Unknown error')
+    return response
   }
 }
