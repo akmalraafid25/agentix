@@ -79,17 +79,15 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Document stats API error:', error)
-    
-    // Fallback data
     return Response.json({
-      totalInvoices: 1250,
-      totalPacking: 890,
-      totalDocuments: 2140,
-      uniqueVendors: 45,
-      invoiceGrowth: '+12.5%',
-      packingGrowth: '+8.3%',
-      vendorGrowth: '+15.2%',
-      totalGrowth: '+10.4%'
+      totalInvoices: 0,
+      totalPacking: 0,
+      totalDocuments: 0,
+      uniqueVendors: 0,
+      invoiceGrowth: '+0.0%',
+      packingGrowth: '+0.0%',
+      vendorGrowth: '+0.0%',
+      totalGrowth: '+0.0%'
     })
   }
 }

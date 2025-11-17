@@ -59,21 +59,6 @@ export async function GET() {
     return Response.json(chartData)
   } catch (error) {
     console.error('Chart data API error:', error)
-    
-    // Fallback data
-    const fallbackData = []
-    const today = new Date()
-    for (let i = 90; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      fallbackData.push({
-        date: date.toISOString().split('T')[0],
-        invoices: Math.floor(Math.random() * 50) + 10,
-        packing: Math.floor(Math.random() * 30) + 5,
-        billOfLandings: Math.floor(Math.random() * 20) + 3
-      })
-    }
-    
-    return Response.json(fallbackData)
+    return Response.json([])
   }
 }

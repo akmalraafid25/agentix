@@ -1,6 +1,4 @@
 import { executeQuery } from '@/lib/snowflake'
-import fs from 'fs'
-import path from 'path'
 
 export async function GET() {
   console.log('Invoice API: Starting request')
@@ -63,12 +61,6 @@ export async function GET() {
   } catch (error) {
     console.error('Invoice API: Snowflake query error:', error)
     console.error('Invoice API: Error details:', error instanceof Error ? error.message : 'Unknown error')
-    // Fallback to local data
-    const filePath = path.join(process.cwd(), 'app/dashboard/data.json')
-    const fileContents = fs.readFileSync(filePath, 'utf8')
-    const data = JSON.parse(fileContents)
-
-    console.log('Invoice API: Using fallback data, count:', data.length)
-    return Response.json(data)
+    return Response.json([])
   }
 }

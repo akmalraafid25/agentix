@@ -5,10 +5,17 @@ let connection: snowflake.Connection | null = null
 function getConnection() {
   if (!connection) {
     console.log('Creating Snowflake connection with account:', process.env.SNOWFLAKE_ACCOUNT?.toLowerCase())
+    
+    // Clean the private key by removing quotes and extra whitespace
+    const privateKey = process.env.SNOWFLAKE_PRIVATE_KEY!
+      .replace(/'/g, '')  // Remove single quotes
+      .trim()             // Remove whitespace
+    
     connection = snowflake.createConnection({
       account: process.env.SNOWFLAKE_ACCOUNT!.toLowerCase(),
       username: process.env.SNOWFLAKE_USER!,
-      password: process.env.SNOWFLAKE_PASSWORD!,
+      authenticator: 'SNOWFLAKE_JWT',
+      privateKey: privateKey,
       database: process.env.SNOWFLAKE_DATABASE!,
       schema: process.env.SNOWFLAKE_SCHEMA!,
       warehouse: process.env.SNOWFLAKE_WAREHOUSE!,
