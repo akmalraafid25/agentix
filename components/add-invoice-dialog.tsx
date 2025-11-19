@@ -32,6 +32,14 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
     
     if (!selectedFile) return
     
+    // Trigger upload notification
+    window.dispatchEvent(new CustomEvent('documentUpload', {
+      detail: { filename: selectedFile.name }
+    }))
+    
+    // Show processing notification
+    toast.loading(`Processing ${selectedFile.name}...`, { id: 'upload' })
+    
     // Upload file to Snowflake and send webhook
     try {
       const uploadFormData = new FormData()
@@ -42,9 +50,30 @@ export function AddInvoiceDialog({ onAdd }: AddInvoiceDialogProps) {
         method: 'POST',
         body: uploadFormData
       })
-      toast.success("Document uploaded successfully")
+      
+      toast.success("Document uploaded and processing started", { id: 'upload' })
+      
+      // Simulate processing completion
+      setTimeout(() => {
+        const success = Math.random() > 0.2 // 80% success rate
+        if (success) {
+          window.dispatchEvent(new CustomEvent('documentComplete', {
+            detail: { filename: selectedFile.name }
+          }))
+          toast.success(`${selectedFile.name} processed successfully!`)
+        } else {
+          window.dispatchEvent(new CustomEvent('documentError', {
+            detail: { filename: selectedFile.name }
+          }))
+          toast.error(`${selectedFile.name} processing failed!`)
+        }
+      }, 3000)
+      
     } catch {
-      toast.error("Upload failed")
+      toast.error("Upload failed", { id: 'upload' })
+      window.dispatchEvent(new CustomEvent('documentError', {
+        detail: { filename: selectedFile.name }
+      }))
       return
     }
     

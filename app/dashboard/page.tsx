@@ -110,10 +110,9 @@ export default function Page() {
               variant="outline"
               size="sm"
               onClick={() => setIsAnalyticsOpen(!isAnalyticsOpen)}
-              className="ml-auto"
             >
               <IconRobotFace className="h-4 w-4 mr-2" />
-Cortex Analyst
+              Cortex Analyst
             </Button>
           </SiteHeader>
           <div className="flex flex-1 flex-col">
